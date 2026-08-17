@@ -1,0 +1,1 @@
+- [VRTSync CRM project rules](vrtsync-rules.md) — intentionally not a monorepo; plain JS only; strict style constraints (no em dashes, no raw hex outside tokens, stage enum fixed).

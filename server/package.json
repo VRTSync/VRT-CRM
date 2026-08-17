@@ -1,0 +1,21 @@
+{
+  "name": "vrtsync-crm-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "connect-pg-simple": "^10.0.0",
+    "drizzle-orm": "^0.45.2",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "jose": "^6.2.9",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.1"
+  }
+}

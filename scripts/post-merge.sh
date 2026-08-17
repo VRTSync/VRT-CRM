@@ -1,4 +1,3 @@
-#!/bin/bash
-set -e
-pnpm install --frozen-lockfile
-pnpm --filter db push
+#!/usr/bin/env bash
+# Post-merge setup. No-op: this project has no generated artifacts to rebuild.
+exit 0
