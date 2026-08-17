@@ -52,5 +52,8 @@ Thumbs.db
 .env
 .env.local
 
+# npm lockfiles (this project uses pnpm; root pnpm-lock.yaml is authoritative)
+package-lock.json
+
 # Session attachments: not part of the codebase
 attached_assets/
