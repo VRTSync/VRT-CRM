@@ -1,0 +1,19 @@
+FIX
+
+client/src/styles/components.css, .nav-group-label Replace color:#5f7183 with color:var(--chrome-fg-3) and remove the "intentional one off" comment on that declaration. Spec 12: "Body text contrast at least 4.5:1. Metadata at --fs-xs and smaller must clear 4.5:1, not 3:1." 
+#5f7183 on --chrome-bg 
+#0C1D31 measures 3.38:1. --chrome-fg-3 
+#94a3b8 on the same background measures 6.63:1.
+client/src/styles/components.css, .step .s-date Replace color:#9aa8b6 with color:var(--muted) and remove the "intentional one off" comment on that declaration. Spec 12, same quote as above. 
+#9aa8b6 on white measures 2.43:1, the lowest value in the build. --muted 
+#6b7280 on white measures 4.83:1. Do not change the font-size on this rule. That is a separate decision and it is not part of this round.
+client/src/components/Sidebar.jsx and client/src/App.jsx The Setup nav item and the screen title both read "Design Spec". Change both to "Spec". Spec 3.1: "Two groups: Work (Dashboard, Customers, Team To-Do, Projects) and Setup (Task Templates, Spec)." Leave the route path /spec as it is. Only the visible label and the screen title change.
+client/src/styles/tokens.css, the file header comment Line 2 reads "filled from the Branch Portfolio design system." That is not where these values came from. Every value in this file was lifted from vrtsync-crm-mockup.html. Correct the comment to say so. Spec 4.0: "The CSS inside vrtsync-crm-mockup.html is not a reference to be reinterpreted. It is the app's stylesheet."
+client/src/App.jsx, the LoginScreen component Move the inline style objects into a class in components.css and use tokens for the values. There should be no raw pixel values in JSX. Spec 4: "Every color, size, and spacing decision routes through a token. No raw values in component CSS."
+.gitignore Add .env and .env.local. They are missing. A Google client secret written to .env would currently be committed.
+Delete scripts/post-merge.sh It exits 0 and does nothing.
+Remove attached_assets/ from the repository and add it to .gitignore. It contains a stale pre-amendment copy of the spec, 02-SPEC_1786984786724.md, which contradicts amendment A1. It also contains marketing PDFs and images that are not part of this codebase. The current spec and the build prompt stay available as attachments in the Replit session. They do not belong in git.
+
+DO NOT
+
+Change anything not listed above. Refactor anything not listed above. Do not change any font-size. Do not delete pnpm-workspace.yaml or .agents/. Do not touch the schema, the auth flow, the seed script, or any other color, padding, or token value.
