@@ -1,0 +1,57 @@
+Review of slice 1, run against the standing checks first, then the acceptance criteria.
+
+VERDICT: pass with defects
+
+Four defects, none structural. The foundation is sound and the parts I was most worried about are correct.
+
+DEFECTS (violates spec, must fix)
+
+[§12] client/src/styles/components.css:276 — .s-date sets color:#9aa8b6 on white, which measures 2.43:1. The floor is 4.5:1. This is the worst contrast value in the build and it is on a 10px element, which §12 singles out: "Metadata at --fs-xs and smaller must clear 4.5:1, not 3:1." Should be var(--muted), which measures 4.83:1 and is already a token.
+
+[§12] client/src/styles/components.css:25 — the Work and Setup nav group labels use color:#5f7183 on --chrome-bg, measuring 3.38:1. Should be var(--chrome-fg-3), which measures 6.63:1 and is already defined for exactly this purpose.
+
+[§3.1, §11] client/src/components/Sidebar.jsx:53 and client/src/App.jsx:36 — the nav item and screen title read "Design Spec". §3.1 names the item "Spec" and §7.7 titles the screen "Spec". Interface copy is not a place to improvise.
+
+[§4, §4.3] components.css:236 and :276 — raw font-size:10px in th and .s-date. The type scale bottoms out at --fs-2xs: 11px, and §4 opens with "No raw values in component CSS." This one is ported faithfully, the mockup uses 10px eleven times, so §16 should have caught it and did not.
+
+Both contrast values also came straight from the mockup, verified. The agent did not introduce them. What it did was mark them "intentional one off" and skip the §12 audit.
+
+DRIFT
+
+tokens.css line 2 claims the values were "filled from the Branch Portfolio design system." They were not. I checked all seven promoted hex values against vrtsync-crm-mockup.html and every one appears there. The values are right and the comment is wrong, which will mislead whoever reads it next.
+
+App.jsx LoginScreen uses inline style objects carrying raw values, paddingTop: "80px", maxWidth: "420px". Inline styles are a route around the stylesheet and the token contract.
+
+pnpm-workspace.yaml survived. Harmless with two packages, but it is the seed of the layout you rejected.
+
+.agents/memory/vrtsync-rules.md records that mobile-width checks required temporarily serving an iframe wrapper. Read that as the 390px criterion being weakly verified.
+
+SCOPE ADDITIONS
+
+.agents/memory/ (2 files), scripts/post-merge.sh (a no-op that exits 0), and the whole attached_assets/ directory committed into the repo, including the stale pre-amendment 02-SPEC_1786984786724.md, PROJECT-INSTRUCTIONS.md, three marketing PNGs and a PDF. The stale spec copy is the one that matters, it is the file we deleted from Replit, now living in git.
+
+The LoginScreen itself is not in BUILD, but you cannot sign in without it. I would not remove it.
+
+PASSED
+
+No Tailwind, shadcn, or any CSS framework or utility library anywhere in the dependency tree. Client deps are React, React DOM, React Router, Vite. That is all.
+--accent is never used as a text color. Every occurrence is a fill, a border, or a gradient stop.
+Row padding 8px, table cells 10px, card header 12px with min-height:48px, stack gap 14px. Every §3.8 value is exact.
+Zero em dashes or en dashes anywhere in the code.
+Eight --stage-* tokens defined, zero inline stage hex remaining. All roughly thirty occurrences converted.
+The stylesheet port is complete. The mockup style block is 544 lines across 85 selectors. The port is 570 lines across 82. The only three missing are .av-rm, .av-tl, and .mock-banner, which §16.5 and §16.6 required removing. Nothing was dropped and nothing was reinterpreted.
+All six §16 cleanups done, including the breakpoint decision, which drops --bp-desktop and --bp-tablet with a correct explanation that media queries cannot read custom properties.
+Schema matches §9 as amended by A1 exactly. Nine stage values, nullable role enum, acreage and fully_maintained present, no stray property columns.
+Auth checks both the email domain and the Google hd claim, which is stronger than specified. Null role on first sign-in. Role endpoint gated on requireOwner.
+Seed: five users covering all four roles plus null, eight customers, one per stage.
+Topbar order is title, subtitle, search, trailing action, per §3.1.
+Repo layout matches FILES. No TypeScript, no OpenAPI, no lib, no artifacts.
+
+NOT VERIFIED
+
+Rendering at 1440x900 and 390px. I can read the CSS but I cannot run the app. You need to look at both widths yourself before committing.
+
+Two decisions before I write the correction prompt:
+
+Both contrast fixes change colors that came from the approved mockup. §12 is an enforced floor and it names contrast, so the spec wins over the mockup here, but the substitutions are mine. Confirm --muted for .s-date and --chrome-fg-3 for the nav group label, or give me different values.
+The 10px font size. Either add --fs-3xs: 10px to §4.3 as amendment A2, or bump both to --fs-2xs at 11px. Adding the token is more honest, since the mockup uses 10px in eleven places and the design was approved.
