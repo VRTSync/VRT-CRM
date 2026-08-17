@@ -36,7 +36,7 @@ const SCREENS = [
   },
   {
     path: "/spec",
-    title: "Design Spec",
+    title: "Spec",
     subtitle: "VRTSync brand system as applied to the CRM",
     action: "+ New Customer",
   },
@@ -50,17 +50,17 @@ function LoginScreen({ error }) {
     inactive: "This account has been deactivated. Contact the owner.",
   };
   return (
-    <div className="shell" style={{ gridTemplateColumns: "1fr" }}>
+    <div className="login-shell">
       <main className="main">
-        <div className="content stack" style={{ margin: "0 auto", paddingTop: "80px", maxWidth: "420px" }}>
+        <div className="login-canvas content stack">
           <div className="card">
             <div className="card-head">
               <h2>VRTSync CRM</h2>
             </div>
             <div className="card-body stack">
-              {error && <p style={{ color: "var(--alarm-ink)" }}>{messages[error] || messages.oauth}</p>}
-              <p style={{ color: "var(--muted)" }}>Sign in with your company Google account to continue.</p>
-              <a className="btn primary" href="/auth/google" style={{ justifyContent: "center" }}>
+              {error && <p className="login-error">{messages[error] || messages.oauth}</p>}
+              <p className="login-hint">Sign in with your company Google account to continue.</p>
+              <a className="btn primary login-btn" href="/auth/google">
                 Sign in with Google
               </a>
             </div>

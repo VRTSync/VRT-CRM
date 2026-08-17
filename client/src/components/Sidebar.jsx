@@ -49,7 +49,7 @@ const WORK_ITEMS = [
 
 const SETUP_ITEMS = [
   { to: "/templates", icon: "templates", label: "Task Templates" },
-  { to: "/spec", icon: "spec", label: "Design Spec" },
+  { to: "/spec", icon: "spec", label: "Spec" },
 ];
 
 function NavItems({ items }) {

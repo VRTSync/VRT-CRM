@@ -1,6 +1,6 @@
 /* ==========================================================================
-   VRTSync CRM token contract, filled from the Branch Portfolio design system.
-   Names are unchanged from the rules sheet section 4. Values are VRTSync.
+   VRTSync CRM token contract. Values lifted from vrtsync-crm-mockup.html,
+   the approved design. Names match spec section 4. Cleanups per section 16.
    Token block only. Component rules live in components.css.
    ========================================================================== */
 :root{
