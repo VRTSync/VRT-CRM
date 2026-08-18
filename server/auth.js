@@ -221,6 +221,28 @@ export function registerAuthRoutes(app) {
     }
   });
 
+  // Dev-only sign-in. Signs in as a seeded user by role without going
+  // through Google. Not available in production.
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/auth/dev-login", async (req, res, next) => {
+      try {
+        const role = req.query.role ?? "owner";
+        const rows = await db
+          .select()
+          .from(users)
+          .where(role === "null" ? eq(users.role, null) : eq(users.role, role));
+        const user = rows[0];
+        if (!user) {
+          return res.status(404).json({ error: `No seeded user with role: ${role}` });
+        }
+        req.session.userId = user.id;
+        req.session.save(() => res.redirect("/"));
+      } catch (err) {
+        next(err);
+      }
+    });
+  }
+
   app.post("/auth/logout", (req, res) => {
     req.session.destroy(() => {
       res.json({ ok: true });
