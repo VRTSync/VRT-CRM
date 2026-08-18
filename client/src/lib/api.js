@@ -23,4 +23,9 @@ export const api = {
       body: JSON.stringify({ role }),
     }),
   customers: () => request("/api/customers"),
+  customer: (id) => request(`/api/customers/${id}`),
+  notes: (customerId) => request(`/api/notes?customerId=${customerId}`),
+  createNote: (data) =>
+    request("/api/notes", { method: "POST", body: JSON.stringify(data) }),
+  contacts: (customerId) => request(`/api/contacts?customerId=${customerId}`),
 };

@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Shell from "./components/Shell.jsx";
+import CustomersList from "./pages/CustomersList.jsx";
+import CustomerRecord from "./pages/CustomerRecord.jsx";
+import { OpenCustomerContext } from "./lib/openCustomer.js";
 import { api } from "./lib/api.js";
 
 const SCREENS = [
@@ -73,6 +76,11 @@ function LoginScreen({ error }) {
 
 export default function App() {
   const [state, setState] = useState({ loading: true, user: null });
+  const [openCustomer, setOpenCustomer] = useState(null);
+  const openCustomerValue = useMemo(
+    () => ({ openCustomer, setOpenCustomer }),
+    [openCustomer]
+  );
 
   useEffect(() => {
     api
@@ -91,6 +99,7 @@ export default function App() {
   }
 
   return (
+    <OpenCustomerContext.Provider value={openCustomerValue}>
     <Routes>
       {SCREENS.map((screen) => (
         <Route
@@ -102,10 +111,25 @@ export default function App() {
               title={screen.title}
               subtitle={screen.subtitle}
               action={screen.action}
-            />
+            >
+              {screen.path === "/customers" && <CustomersList />}
+            </Shell>
           }
         />
       ))}
+      <Route
+        path="/customers/:id"
+        element={
+          <Shell
+            user={state.user}
+            title="Customers"
+            subtitle="Customer record"
+            action="+ New Customer"
+          >
+            <CustomerRecord />
+          </Shell>
+        }
+      />
       <Route
         path="*"
         element={
@@ -118,5 +142,6 @@ export default function App() {
         }
       />
     </Routes>
+    </OpenCustomerContext.Provider>
   );
 }

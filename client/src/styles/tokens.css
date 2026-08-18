@@ -89,6 +89,7 @@
   --fs-sm:      13px;
   --fs-xs:      12px;
   --fs-2xs:     11px;
+  --fs-3xs:     10px;   /* per A2: table headers and completed step dates only */
 
   --fw-normal: 400;  --fw-med: 500;  --fw-semi: 600;  --fw-bold: 700;
 

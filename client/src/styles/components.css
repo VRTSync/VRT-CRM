@@ -235,7 +235,7 @@
 
 /* ---------- table ---------- */
 th{
-  text-align:left;font-size:10px;font-weight:var(--fw-bold);letter-spacing:.8px;
+  text-align:left;font-size:var(--fs-3xs);font-weight:var(--fw-bold);letter-spacing:.8px;
   text-transform:uppercase;color:var(--muted);white-space:nowrap;
   padding:var(--sp-4) var(--sp-8);background:var(--surface-alt);border-bottom:1px solid var(--line);
 }
@@ -247,6 +247,10 @@ tbody tr:hover{background:var(--surface-alt)}
 .t-sub{font-size:var(--fs-xs);color:var(--muted);margin-top:1px}
 .mono{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--muted)}
 th.sortable::after{content:' ↕';opacity:.4}
+/* New rules: sortable header button and clickable row. The ported
+   stylesheet had no class for keyboard-reachable sort or row links. */
+th .th-sort{font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;padding:0}
+tr.row-link{cursor:pointer}
 
 /* ---------- filter chips ---------- */
 .chips{display:flex;gap:var(--sp-3);flex-wrap:wrap;align-items:center}
@@ -274,7 +278,7 @@ th.sortable::after{content:' ↕';opacity:.4}
 .step .bar{position:absolute;top:12px;height:3px;width:100%;left:-50%;z-index:1;background:var(--line);border-radius:2px}
 .step:first-child .bar{display:none}
 .step .s-name{font-size:var(--fs-2xs);font-weight:var(--fw-med);color:var(--muted);line-height:1.3;padding:0 3px}
-.step .s-date{font-size:10px;color:var(--muted);margin-top:1px}
+.step .s-date{font-size:var(--fs-3xs);color:var(--muted);margin-top:1px}
 .step.done .node{background:var(--accent-2);border-color:var(--accent-2);color:var(--chrome-fg-hi)}
 .step.done .s-name{color:var(--ink-2)}
 .step.done .bar{background:var(--accent-2)}
@@ -284,6 +288,11 @@ th.sortable::after{content:' ↕';opacity:.4}
 }
 .step.current .s-name{color:var(--accent-ink);font-weight:var(--fw-bold)}
 .step.current .bar{background:var(--accent-2)}
+/* behind: was completed, then the customer moved backward past it.
+   New rule: the ported stylesheet had no class for this stepper state. */
+.step.behind .node{background:var(--warn-soft);border-color:var(--warn);color:var(--warn-ink)}
+.step.behind .s-name{color:var(--warn-ink)}
+.step.behind .bar{background:var(--line)}
 
 /* ---------- timeline ---------- */
 .timeline{position:relative;padding:var(--sp-6) var(--sp-8) var(--sp-6) 0;margin-left:var(--sp-9)}

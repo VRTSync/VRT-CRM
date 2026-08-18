@@ -33,6 +33,32 @@ export const customerStage = pgEnum("customer_stage", [
   "churned",
 ]);
 
+// The four service layers per amendment A1. Scope and price only,
+// no quantity or measurement columns. Measurements live in the platform.
+export const serviceLayer = pgEnum("service_layer", [
+  "property",
+  "irrigation",
+  "trees",
+  "snow",
+]);
+
+export const contactType = pgEnum("contact_type", [
+  "board",
+  "manager",
+  "contractor",
+  "other",
+]);
+
+// Six note kinds. system is written only by the stage change engine.
+export const noteKind = pgEnum("note_kind", [
+  "call",
+  "email",
+  "meeting",
+  "site_visit",
+  "note",
+  "system",
+]);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   googleSub: text("google_sub").notNull().unique(),
@@ -46,8 +72,62 @@ export const users = pgTable("users", {
     .defaultNow(),
 });
 
+// Exactly four rows per customer, one per layer, created with the customer.
+// A layer is never deleted, only marked out of scope.
+export const customerLayers = pgTable("customer_layers", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id")
+    .notNull()
+    .references(() => customers.id),
+  layer: serviceLayer("layer").notNull(),
+  inScope: boolean("in_scope").notNull().default(false),
+  annualPrice: numeric("annual_price", { precision: 12, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const contacts = pgTable("contacts", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id")
+    .notNull()
+    .references(() => customers.id),
+  name: text("name").notNull(),
+  title: text("title"),
+  organization: text("organization"),
+  email: text("email"),
+  phone: text("phone"),
+  contactType: contactType("contact_type").notNull().default("other"),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  notes: text("notes"),
+});
+
+// from_stage and to_stage are set only by stage change notes, which the
+// stage change engine writes in a later slice. This table is the full
+// stage history. There is no separate table.
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").references(() => customers.id),
+  projectId: integer("project_id"),
+  authorUserId: integer("author_user_id")
+    .notNull()
+    .references(() => users.id),
+  kind: noteKind("kind").notNull(),
+  body: text("body").notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  fromStage: customerStage("from_stage"),
+  toStage: customerStage("to_stage"),
+});
+
 // Property profile per amendment A1: acreage and fully_maintained only.
-// Service layer quantities live in customer_layers, built in a later slice.
+// Scope and price per service layer live in customer_layers. Annual value
+// is derived from in-scope layer prices at read time, never stored.
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -62,7 +142,6 @@ export const customers = pgTable("customers", {
     .defaultNow(),
   ownerUserId: integer("owner_user_id").references(() => users.id),
   vrtsyncMapUrl: text("vrtsync_map_url"),
-  annualValue: numeric("annual_value", { precision: 12, scale: 2 }),
   termYears: integer("term_years"),
   renewalDate: date("renewal_date"),
   source: text("source"),

@@ -5,6 +5,8 @@ import express from "express";
 import { sessionMiddleware, registerAuthRoutes } from "./auth.js";
 import usersRouter from "./routes/users.js";
 import customersRouter from "./routes/customers.js";
+import notesRouter from "./routes/notes.js";
+import contactsRouter from "./routes/contacts.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,6 +18,8 @@ app.use(sessionMiddleware());
 registerAuthRoutes(app);
 app.use("/api/users", usersRouter);
 app.use("/api/customers", customersRouter);
+app.use("/api/notes", notesRouter);
+app.use("/api/contacts", contactsRouter);
 
 // In production the Vite client is built ahead of time into client/dist.
 // Express serves those static files and falls back to index.html for all

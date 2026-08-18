@@ -1,5 +1,6 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import Avatar from "./Avatar.jsx";
+import { useOpenCustomer } from "../lib/openCustomer.js";
 
 const ICONS = {
   dashboard: (
@@ -53,17 +54,31 @@ const SETUP_ITEMS = [
 ];
 
 function NavItems({ items }) {
+  const location = useLocation();
+  const { openCustomer } = useOpenCustomer();
+  const onCustomerRecord =
+    openCustomer && location.pathname === `/customers/${openCustomer.id}`;
   return (
     <nav className="nav">
       {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === "/"}
-          className={({ isActive }) => (isActive ? "active" : undefined)}
-        >
-          {ICONS[item.icon]} {item.label}
-        </NavLink>
+        <div key={item.to}>
+          <NavLink
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) =>
+              isActive || (item.to === "/customers" && onCustomerRecord)
+                ? "active"
+                : undefined
+            }
+          >
+            {ICONS[item.icon]} {item.label}
+          </NavLink>
+          {item.to === "/customers" && onCustomerRecord && (
+            <NavLink to={`/customers/${openCustomer.id}`} className="sub active">
+              {openCustomer.name}
+            </NavLink>
+          )}
+        </div>
       ))}
     </nav>
   );
