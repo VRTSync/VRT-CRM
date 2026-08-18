@@ -7,6 +7,7 @@ import usersRouter from "./routes/users.js";
 import customersRouter from "./routes/customers.js";
 import notesRouter from "./routes/notes.js";
 import contactsRouter from "./routes/contacts.js";
+import tasksRouter from "./routes/tasks.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,6 +21,7 @@ app.use("/api/users", usersRouter);
 app.use("/api/customers", customersRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/contacts", contactsRouter);
+app.use("/api/tasks", tasksRouter);
 
 // In production the Vite client is built ahead of time into client/dist.
 // Express serves those static files and falls back to index.html for all

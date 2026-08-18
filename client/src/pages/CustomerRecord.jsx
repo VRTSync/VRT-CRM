@@ -14,6 +14,8 @@ import Tabs from "../components/Tabs.jsx";
 import NoteComposer from "../components/NoteComposer.jsx";
 import Timeline from "../components/Timeline.jsx";
 import ContactsTable from "../components/ContactsTable.jsx";
+import TaskRow from "../components/TaskRow.jsx";
+import TaskComposer from "../components/TaskComposer.jsx";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -41,9 +43,21 @@ export default function CustomerRecord() {
   const [owners, setOwners] = useState({});
   const [tab, setTab] = useState("overview");
   const [commFilter, setCommFilter] = useState("all");
+  const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [addingTask, setAddingTask] = useState(false);
 
   function loadNotes() {
     api.notes(customerId).then(setNotes);
+  }
+
+  function loadTasks() {
+    api.getTasks({ customerId }).then(setTasks);
+  }
+
+  async function toggleTask(task, status) {
+    await api.updateTask(task.id, { status });
+    loadTasks();
   }
 
   useEffect(() => {
@@ -54,10 +68,12 @@ export default function CustomerRecord() {
       setOpenCustomer({ id: c.id, name: c.name });
     });
     api.contacts(customerId).then(setContacts);
-    api.users().then((users) => {
-      setOwners(Object.fromEntries(users.map((u) => [u.id, u.name])));
+    api.users().then((list) => {
+      setUsers(list);
+      setOwners(Object.fromEntries(list.map((u) => [u.id, u.name])));
     });
     loadNotes();
+    loadTasks();
     return () => setOpenCustomer(null);
   }, [customerId]);
 
@@ -242,32 +258,74 @@ export default function CustomerRecord() {
         </div>
       )}
 
-      {tab === "todo" && (
-        <div className="stack">
-          <div className="card">
-            <div className="card-head">
-              <h2>Open</h2>
-              <div className="trail">
-                <span className="hint">0 tasks</span>
+      {tab === "todo" && (() => {
+        const openTasks = tasks.filter((t) => t.status !== "done");
+        const doneTasks = tasks.filter((t) => t.status === "done");
+        return (
+          <div className="stack">
+            <div className="card">
+              <div className="card-head">
+                <h2>Open</h2>
+                <div className="trail">
+                  <span className="hint">
+                    {openTasks.length} {openTasks.length === 1 ? "task" : "tasks"}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn sm"
+                    onClick={() => setAddingTask((v) => !v)}
+                  >
+                    + Add Task
+                  </button>
+                </div>
+              </div>
+              {addingTask && (
+                <div className="card-body">
+                  <TaskComposer
+                    customerId={customerId}
+                    users={users}
+                    onSaved={() => {
+                      loadTasks();
+                      setAddingTask(false);
+                    }}
+                    onCancel={() => setAddingTask(false)}
+                  />
+                </div>
+              )}
+              <div className="card-body flush">
+                {openTasks.length === 0 && !addingTask && (
+                  <div className="row">
+                    <div className="grow r-meta">No open tasks.</div>
+                  </div>
+                )}
+                {openTasks.map((t) => (
+                  <TaskRow key={t.id} task={t} onToggle={toggleTask} />
+                ))}
               </div>
             </div>
-            <div className="card-body">
-              <p className="hint">No open tasks. Tasks arrive in a later slice.</p>
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-head">
-              <h2>Completed</h2>
-              <div className="trail">
-                <span className="hint">0 tasks</span>
+            <div className="card">
+              <div className="card-head">
+                <h2>Completed</h2>
+                <div className="trail">
+                  <span className="hint">
+                    {doneTasks.length} {doneTasks.length === 1 ? "task" : "tasks"}
+                  </span>
+                </div>
+              </div>
+              <div className="card-body flush">
+                {doneTasks.length === 0 && (
+                  <div className="row">
+                    <div className="grow r-meta">No completed tasks yet.</div>
+                  </div>
+                )}
+                {doneTasks.map((t) => (
+                  <TaskRow key={t.id} task={t} onToggle={toggleTask} />
+                ))}
               </div>
             </div>
-            <div className="card-body">
-              <p className="hint">No completed tasks yet.</p>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {tab === "documents" && (
         <div className="card">

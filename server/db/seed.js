@@ -9,6 +9,7 @@ import {
   customerLayers,
   contacts,
   notes,
+  tasks,
 } from "./schema.js";
 
 const SEED_USERS = [
@@ -272,10 +273,64 @@ const NOTE_BODIES = {
     "Renewal is 90 days out. They have added two common areas since the original agreement, so the acreage on file is low. Worth re-walking before we quote the renewal.",
 };
 
+function daysFromNow(n) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// At least 30 tasks, all source=manual, spread across the four role-holding
+// users plus an unassigned set. Every badge variant appears: overdue,
+// due today, due this week, blocked, done. A few have null customer so
+// "Internal" renders. [title, customerName|null, role, assigneeKey|null,
+// dueOffsetDays|null, status]
+const TASK_PLANS = [
+  // Jordan, sales
+  ["Send revised proposal with snow scope broken out", "Stonegate Village", "sales", "jordan", -3, "open"],
+  ["Call Dana about irrigation as-builts", "Willow Creek HOA", "sales", "jordan", 0, "open"],
+  ["Prepare board presentation for scope vote", "Silver Lake Villas", "sales", "jordan", 3, "open"],
+  ["Follow up on web form inquiry", "Aspen Grove Townhomes", "sales", "jordan", 5, "open"],
+  ["Collect signed agreement from Meridian", "Willow Creek HOA", "sales", "jordan", -1, "open"],
+  ["Send Miramonte reference sheet to Elaine", "Willow Creek HOA", "sales", "jordan", null, "done"],
+  ["Draft renewal quote after re-walk", "Cedar Ridge HOA", "sales", "jordan", 12, "open"],
+  // Maya, mapping
+  ["Schedule property walk with Dana", "Willow Creek HOA", "mapping", "maya", 0, "open"],
+  ["Map the two undocumented north zones", "Ridgeview Commons", "mapping", "maya", -5, "open"],
+  ["Verify bed count against proposal", "Ridgeview Commons", "mapping", "maya", 2, "open"],
+  ["Request gate codes for west entry", "Sagebrush Village", "mapping", "maya", null, "blocked"],
+  ["Upload mapping pass to platform", "Sagebrush Village", "mapping", "maya", 4, "open"],
+  ["Re-walk added common areas before renewal", "Cedar Ridge HOA", "mapping", "maya", 6, "open"],
+  ["Close out mapping QA checklist", "Ridgeview Commons", "mapping", "maya", null, "done"],
+  // Tomas, admin
+  ["Send first invoice after property walk", "Willow Creek HOA", "admin", "tomas", -2, "open"],
+  ["Set up training session with Lantern Hill staff", "Lantern Hill HOA", "admin", "tomas", 1, "open"],
+  ["Confirm data load window with Anchor Realty", "Sagebrush Village", "admin", "tomas", 3, "open"],
+  ["File executed agreement copy", "Willow Creek HOA", "admin", "tomas", null, "done"],
+  ["Update contractor contact list", null, "admin", "tomas", 7, "open"],
+  ["Renew business insurance certificate", null, "admin", "tomas", -8, "open"],
+  ["Order field tablets for mapping crew", null, "admin", "tomas", null, "blocked"],
+  // Randy, owner, tasks carry a role but he is the assignee
+  ["Review Stonegate proposal pricing", "Stonegate Village", "sales", "randy", 0, "open"],
+  ["Approve mapping scope change for north expansion", "Ridgeview Commons", "mapping", "randy", -1, "open"],
+  ["Quarterly review of live accounts", "Cedar Ridge HOA", "admin", "randy", 5, "open"],
+  ["Sign off on training curriculum", "Lantern Hill HOA", "admin", "randy", 2, "open"],
+  ["Set Q3 pipeline targets", null, "sales", "randy", null, "done"],
+  // Unassigned set
+  ["Chase Crestline for updated as-builts", "Silver Lake Villas", "mapping", null, -4, "open"],
+  ["Confirm snow scope with current provider", "Stonegate Village", "sales", null, 0, "open"],
+  ["Collect W-9 from Summit Snow Services", null, "admin", null, 4, "open"],
+  ["Photograph north common area beds", "Willow Creek HOA", "mapping", null, 6, "open"],
+  ["Verify unit count against county records", "Aspen Grove Townhomes", "admin", null, null, "blocked"],
+  ["Archive churned account records", null, "admin", null, null, "done"],
+];
+
 async function seed() {
   // Reset. Truncate keeps the schema and restarts ids so reruns are stable.
   await db.execute(
-    sql`TRUNCATE TABLE notes, contacts, customer_layers, customers, users RESTART IDENTITY CASCADE`
+    sql`TRUNCATE TABLE tasks, notes, contacts, customer_layers, customers, users RESTART IDENTITY CASCADE`
   );
 
   const insertedUsers = await db.insert(users).values(SEED_USERS).returning();
@@ -378,10 +433,33 @@ async function seed() {
     .returning();
   const insertedNotes = await db.insert(notes).values(noteRows).returning();
 
+  const customerIdsByName = Object.fromEntries(
+    insertedCustomers.map((c) => [c.name, c.id])
+  );
+  const assigneeIds = {
+    randy: ownerIds.randy,
+    jordan: ownerIds.jordan,
+    maya: ownerIds.maya,
+    tomas: ownerIds.tomas,
+  };
+  const taskRows = TASK_PLANS.map(
+    ([title, customerName, role, assigneeKey, dueOffset, status]) => ({
+      title,
+      customerId: customerName ? customerIdsByName[customerName] : null,
+      role,
+      assigneeUserId: assigneeKey ? assigneeIds[assigneeKey] : null,
+      dueDate: dueOffset === null ? null : daysFromNow(dueOffset),
+      status,
+      source: "manual",
+      completedAt: status === "done" ? daysAgo(2, 16, 0) : null,
+    })
+  );
+  const insertedTasks = await db.insert(tasks).values(taskRows).returning();
+
   console.log(
     `Seeded ${insertedUsers.length} users, ${insertedCustomers.length} customers, ` +
       `${insertedLayers.length} layers, ${insertedContacts.length} contacts, ` +
-      `${insertedNotes.length} notes`
+      `${insertedNotes.length} notes, ${insertedTasks.length} tasks`
   );
 }
 

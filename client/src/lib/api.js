@@ -28,4 +28,16 @@ export const api = {
   createNote: (data) =>
     request("/api/notes", { method: "POST", body: JSON.stringify(data) }),
   contacts: (customerId) => request(`/api/contacts?customerId=${customerId}`),
+  getTasks: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") qs.set(k, v);
+    });
+    const q = qs.toString();
+    return request(`/api/tasks${q ? `?${q}` : ""}`);
+  },
+  createTask: (data) =>
+    request("/api/tasks", { method: "POST", body: JSON.stringify(data) }),
+  updateTask: (id, data) =>
+    request(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 };

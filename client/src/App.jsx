@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Shell from "./components/Shell.jsx";
 import CustomersList from "./pages/CustomersList.jsx";
 import CustomerRecord from "./pages/CustomerRecord.jsx";
+import TeamTodo from "./pages/TeamTodo.jsx";
 import { OpenCustomerContext } from "./lib/openCustomer.js";
 import { api } from "./lib/api.js";
 
@@ -18,12 +19,6 @@ const SCREENS = [
     title: "Customers",
     subtitle: "All communities and the active pipeline",
     action: "+ New Customer",
-  },
-  {
-    path: "/team",
-    title: "Team To-Do",
-    subtitle: "Open tasks across the company",
-    action: "+ Add Task",
   },
   {
     path: "/projects",
@@ -44,6 +39,49 @@ const SCREENS = [
     action: "+ New Customer",
   },
 ];
+
+const GROUPINGS = [
+  { id: "person", label: "Person" },
+  { id: "customer", label: "Customer" },
+  { id: "role", label: "Role" },
+];
+
+// Team To-Do owns two pieces of top-bar state: the grouping control and
+// the "+ Add Task" action that opens the inline composer.
+function TeamTodoScreen({ user }) {
+  const [grouping, setGrouping] = useState("person");
+  const [composerOpen, setComposerOpen] = useState(false);
+  return (
+    <Shell
+      user={user}
+      title="Team To-Do"
+      subtitle="Open tasks across the company"
+      action="+ Add Task"
+      onAction={() => setComposerOpen((v) => !v)}
+      topbarExtra={
+        <div className="chips">
+          {GROUPINGS.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              className={`chip${grouping === g.id ? " active" : ""}`}
+              onClick={() => setGrouping(g.id)}
+              aria-pressed={grouping === g.id}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+      }
+    >
+      <TeamTodo
+        grouping={grouping}
+        composerOpen={composerOpen}
+        onComposerClose={() => setComposerOpen(false)}
+      />
+    </Shell>
+  );
+}
 
 function LoginScreen({ error }) {
   const messages = {
@@ -117,6 +155,7 @@ export default function App() {
           }
         />
       ))}
+      <Route path="/team" element={<TeamTodoScreen user={state.user} />} />
       <Route
         path="/customers/:id"
         element={

@@ -1,4 +1,4 @@
-export default function Topbar({ title, subtitle, action }) {
+export default function Topbar({ title, subtitle, action, extra, onAction }) {
   return (
     <div className="topbar">
       <div>
@@ -13,7 +13,8 @@ export default function Topbar({ title, subtitle, action }) {
         </svg>{" "}
         Search customers, contacts, notes
       </div>
-      <button className="btn primary" type="button">
+      {extra}
+      <button className="btn primary" type="button" onClick={onAction}>
         {action}
       </button>
     </div>

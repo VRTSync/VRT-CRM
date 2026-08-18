@@ -454,6 +454,30 @@ tr.row-link{cursor:pointer}
   .btn,.chip,.tabs button{min-height:40px}
 }
 
+/* ---------- team to-do ---------- */
+.filterbar{display:flex;align-items:center;gap:var(--sp-9);flex-wrap:wrap}
+.person-grid{align-items:start}
+.check:focus-visible,.chip:focus-visible,.btn:focus-visible{
+  outline:2px solid var(--accent-2);outline-offset:2px}
+.assign-select{
+  font:inherit;font-size:var(--fs-xs);color:var(--ink-2);background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius-sm);padding:2px var(--sp-2);cursor:pointer}
+.assign-select:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
+
+/* ---------- task composer ---------- */
+.task-composer .tc-fields{display:flex;flex-direction:column}
+.task-composer .tc-input{
+  width:100%;border:none;outline:none;background:transparent;font:inherit;
+  font-size:var(--fs-sm);color:var(--ink-2);padding:var(--sp-4) var(--sp-6)}
+.task-composer .tc-input + .tc-input{border-top:1px solid var(--line-2);font-size:var(--fs-xs)}
+.task-composer .tc-select{
+  font:inherit;font-size:var(--fs-xs);color:var(--ink-2);background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius-sm);padding:4px var(--sp-3)}
+
+@media (max-width: 900px){
+  .person-grid{grid-template-columns:1fr}
+}
+
 /* ---------- login ---------- */
 .login-shell{display:flex;min-height:100vh}
 .login-canvas{margin:0 auto;padding-top:80px;max-width:420px}

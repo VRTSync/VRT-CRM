@@ -59,6 +59,21 @@ export const noteKind = pgEnum("note_kind", [
   "system",
 ]);
 
+// Task status is the stored state only. Derived display states (overdue,
+// due today, due this week) are computed at read time, never stored.
+export const taskStatus = pgEnum("task_status", ["open", "done", "blocked"]);
+
+// Where a task came from. template and meeting are written by later slices;
+// the API rejects them until then.
+export const taskSource = pgEnum("task_source", [
+  "template",
+  "meeting",
+  "manual",
+]);
+
+// The role a task belongs to. Owner is not a task role.
+export const taskRole = pgEnum("task_role", ["sales", "mapping", "admin"]);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   googleSub: text("google_sub").notNull().unique(),
@@ -67,6 +82,26 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   role: userRole("role"),
   isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// Tasks per spec 9. project_id and template_item_id are plain integers this
+// slice; their target tables arrive in slices 4 and 6.
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  customerId: integer("customer_id").references(() => customers.id),
+  projectId: integer("project_id"),
+  role: taskRole("role"),
+  assigneeUserId: integer("assignee_user_id").references(() => users.id),
+  dueDate: date("due_date"),
+  status: taskStatus("status").notNull().default("open"),
+  source: taskSource("source").notNull().default("manual"),
+  templateItemId: integer("template_item_id"),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
