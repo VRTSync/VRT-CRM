@@ -172,7 +172,7 @@ export default function CustomerRecord() {
                       <div className="r-title">{c.name}</div>
                       <div className="r-meta">
                         {c.title}
-                        {c.organization && <span className="sep">/</span>}
+                        {c.organization && <span className="sep">&middot;</span>}
                         {c.organization}
                       </div>
                     </div>
@@ -201,7 +201,7 @@ export default function CustomerRecord() {
                       <div className="r-title">{c.name}</div>
                       <div className="r-meta">
                         {c.title}
-                        {c.organization && <span className="sep">/</span>}
+                        {c.organization && <span className="sep">&middot;</span>}
                         {c.organization}
                       </div>
                     </div>

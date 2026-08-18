@@ -436,6 +436,7 @@ tr.row-link{cursor:pointer}
 @media (max-width:1100px){
   .g-4{grid-template-columns:repeat(2,1fr)}
   .g-2-1,.g-1-2,.g-half,.g-3{grid-template-columns:1fr}
+  .person-grid{grid-template-columns:1fr}
 }
 @media (max-width:820px){
   .shell{flex-direction:column}
@@ -457,8 +458,6 @@ tr.row-link{cursor:pointer}
 /* ---------- team to-do ---------- */
 .filterbar{display:flex;align-items:center;gap:var(--sp-9);flex-wrap:wrap}
 .person-grid{align-items:start}
-.check:focus-visible,.chip:focus-visible,.btn:focus-visible{
-  outline:2px solid var(--accent-2);outline-offset:2px}
 .assign-select{
   font:inherit;font-size:var(--fs-xs);color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:var(--radius-sm);padding:2px var(--sp-2);cursor:pointer}
@@ -473,10 +472,6 @@ tr.row-link{cursor:pointer}
 .task-composer .tc-select{
   font:inherit;font-size:var(--fs-xs);color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:var(--radius-sm);padding:4px var(--sp-3)}
-
-@media (max-width: 900px){
-  .person-grid{grid-template-columns:1fr}
-}
 
 /* ---------- login ---------- */
 .login-shell{display:flex;min-height:100vh}

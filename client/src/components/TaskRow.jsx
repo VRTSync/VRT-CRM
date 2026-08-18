@@ -11,7 +11,9 @@ export default function TaskRow({ task, onToggle, onAssign, users }) {
   const status = deriveStatus(task);
   const meta = STATUS_META[status];
   const badgeLabel =
-    status === "open" && task.dueDate ? formatDate(task.dueDate) : meta.label;
+    (status === "open" || status === "due-this-week") && task.dueDate
+      ? formatDate(task.dueDate)
+      : meta.label;
 
   return (
     <div className={`row${done ? " done" : ""}`}>
@@ -28,7 +30,7 @@ export default function TaskRow({ task, onToggle, onAssign, users }) {
         <div className="r-title">{task.title}</div>
         <div className="r-meta">
           <span>{task.customerName || "Internal"}</span>
-          {(task.assigneeName || task.role) && <span className="sep">/</span>}
+          {(task.assigneeName || task.role) && <span className="sep">&middot;</span>}
           {task.assigneeName ? (
             <span>{task.assigneeName}</span>
           ) : task.role ? (
@@ -36,7 +38,7 @@ export default function TaskRow({ task, onToggle, onAssign, users }) {
           ) : null}
           {task.source === "template" && (
             <>
-              <span className="sep">/</span>
+              <span className="sep">&middot;</span>
               <span>From template</span>
             </>
           )}

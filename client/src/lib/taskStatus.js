@@ -37,7 +37,7 @@ export const STATUS_META = {
   overdue: { label: "Overdue", variant: "alarm" },
   blocked: { label: "Blocked", variant: "alarm" },
   "due-today": { label: "Due today", variant: "warn" },
-  "due-this-week": { label: "This week", variant: "info" },
+  "due-this-week": { label: null, variant: "" },
   done: { label: "Done", variant: "good" },
   open: { label: "Open", variant: "" },
 };
