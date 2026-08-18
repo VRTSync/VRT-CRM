@@ -104,6 +104,16 @@ function LoginScreen({ error }) {
               <a className="btn primary login-btn" href="/auth/google">
                 Sign in with Google
               </a>
+              {import.meta.env.DEV && (
+                <div className="dev-login">
+                  <p className="login-hint">Dev sign-in (not available in production)</p>
+                  {["owner","admin","sales","mapping","null"].map((role) => (
+                    <a key={role} className="btn ghost login-btn" href={`/auth/dev-login?role=${role}`}>
+                      Sign in as {role}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
