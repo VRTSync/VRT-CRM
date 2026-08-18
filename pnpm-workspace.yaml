@@ -11,3 +11,4 @@ minimumReleaseAgeExclude:
 packages:
   - client
   - server
+  - artifacts/*

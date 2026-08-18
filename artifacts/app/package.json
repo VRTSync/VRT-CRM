@@ -1,0 +1,11 @@
+{
+  "name": "@workspace/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --dir ../../client run dev",
+    "build": "pnpm --dir ../../client run build",
+    "typecheck": "echo skipped"
+  }
+}

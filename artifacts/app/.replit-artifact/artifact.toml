@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "VRTSync CRM"
+description = "Internal CRM for the VRTSync property maintenance software team, replacing Zoho. Tracks customers through a nine-stage pipeline, tasks, and team to-dos."
+version = "1.0.0"
+id = "artifacts/app"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23863
+
+[services.development]
+run = "pnpm --filter @workspace/app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/app", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/app/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23863"
+BASE_PATH = "/"
