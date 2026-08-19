@@ -1,6 +1,5 @@
-// Rerunnable seed script. Resets and repopulates users, customers,
-// customer_layers, contacts, and notes with data drawn from the names,
-// figures, and note bodies in vrtsync-crm-mockup.html.
+// Rerunnable seed script. Resets and repopulates CRM data with fixtures
+// drawn from the names, figures, and note bodies in vrtsync-crm-mockup.html.
 import { sql } from "drizzle-orm";
 import { db, pool } from "./index.js";
 import {
@@ -10,6 +9,7 @@ import {
   contacts,
   notes,
   tasks,
+  projects,
   taskTemplates,
   templateItems,
 } from "./schema.js";
@@ -286,9 +286,9 @@ function daysFromNow(n) {
 
 // At least 30 tasks, all source=manual, spread across the four role-holding
 // users plus an unassigned set. Every badge variant appears: overdue,
-// due today, due this week, blocked, done. A few have null customer so
-// "Internal" renders. [title, customerName|null, role, assigneeKey|null,
-// dueOffsetDays|null, status]
+// due today, due this week, blocked, done. Rows with a null customer are
+// assigned to standalone projects below. [title, customerName|null, role,
+// assigneeKey|null, dueOffsetDays|null, status]
 const TASK_PLANS = [
   // Jordan, sales
   ["Send revised proposal with snow scope broken out", "Stonegate Village", "sales", "jordan", -3, "open"],
@@ -327,6 +327,24 @@ const TASK_PLANS = [
   ["Photograph north common area beds", "Willow Creek HOA", "mapping", null, 6, "open"],
   ["Verify unit count against county records", "Aspen Grove Townhomes", "admin", null, null, "blocked"],
   ["Archive churned account records", null, "admin", null, null, "done"],
+];
+
+// Operational work spans every board status. A null customer name is a
+// stand-alone internal project; other projects remain visibly linked.
+const PROJECT_PLANS = [
+  ["Build contractor onboarding kit", "Package field guides and handoff materials for new contractors.", "backlog", null, "tomas", 28],
+  ["Willow Creek kickoff readiness", "Coordinate access, records, and the opening property walk.", "backlog", "Willow Creek HOA", "jordan", 14],
+  ["Ridgeview north expansion map", "Document the additional irrigation zones beyond the north gate.", "in_progress", "Ridgeview Commons", "maya", 9],
+  ["Crew tablet refresh", "Prepare field devices and inventory for the mapping team.", "in_progress", null, "tomas", 18],
+  ["Stonegate board scope packet", "Finalize the material for the upcoming scope vote.", "blocked", "Stonegate Village", "randy", 6],
+  ["Knowledge base cleanup", "Archive outdated field procedures and standardize the current set.", "blocked", null, "jordan", 21],
+  ["Lantern Hill training rollout", "Complete the manager and board training sequence.", "done", "Lantern Hill HOA", "tomas", -4],
+  ["Q2 operations retrospective", "Capture process improvements from the latest onboarding cycle.", "done", null, "randy", -8],
+];
+
+const PROJECT_NOTES = [
+  "Reviewed the working plan and identified the owners for the next round of deliverables. The project is ready to move forward once those details are confirmed.",
+  "Shared the current work with the project lead. We have a clear follow-up list and will keep updates in this project timeline rather than the customer record.",
 ];
 
 // The six shipped templates per spec 7.6. Signed to Onboarding matches the
@@ -457,7 +475,7 @@ const FIXTURE_LAYERS = {
 async function seed() {
   // Reset. Truncate keeps the schema and restarts ids so reruns are stable.
   await db.execute(
-    sql`TRUNCATE TABLE tasks, notes, contacts, customer_layers, customers, template_items, task_templates, users RESTART IDENTITY CASCADE`
+    sql`TRUNCATE TABLE tasks, notes, projects, contacts, customer_layers, customers, template_items, task_templates, users RESTART IDENTITY CASCADE`
   );
 
   const insertedUsers = await db.insert(users).values(SEED_USERS).returning();
@@ -569,10 +587,32 @@ async function seed() {
     maya: ownerIds.maya,
     tomas: ownerIds.tomas,
   };
+
+  const projectRows = PROJECT_PLANS.map(
+    ([name, description, status, customerName, leadKey, targetOffset]) => ({
+      name,
+      description,
+      status,
+      customerId: customerName ? customerIdsByName[customerName] : null,
+      leadUserId: ownerIds[leadKey],
+      targetDate: daysFromNow(targetOffset),
+    })
+  );
+  const insertedProjects = await db.insert(projects).values(projectRows).returning();
+  const projectByName = Object.fromEntries(
+    insertedProjects.map((project) => [project.name, project])
+  );
+  const internalProjectByRole = {
+    sales: projectByName["Q2 operations retrospective"].id,
+    mapping: projectByName["Crew tablet refresh"].id,
+    admin: projectByName["Build contractor onboarding kit"].id,
+  };
+
   const taskRows = TASK_PLANS.map(
     ([title, customerName, role, assigneeKey, dueOffset, status]) => ({
       title,
       customerId: customerName ? customerIdsByName[customerName] : null,
+      projectId: customerName ? null : internalProjectByRole[role],
       role,
       assigneeUserId: assigneeKey ? assigneeIds[assigneeKey] : null,
       dueDate: dueOffset === null ? null : daysFromNow(dueOffset),
@@ -582,6 +622,47 @@ async function seed() {
     })
   );
   const insertedTasks = await db.insert(tasks).values(taskRows).returning();
+
+  const projectNoteRows = insertedProjects.flatMap((project, index) => [
+    {
+      projectId: project.id,
+      authorUserId: project.leadUserId,
+      kind: "note",
+      body: PROJECT_NOTES[index % PROJECT_NOTES.length],
+      occurredAt: daysAgo(index + 1, 10, 30),
+    },
+    {
+      projectId: project.id,
+      authorUserId: ownerIds.randy,
+      kind: index % 2 ? "email" : "meeting",
+      body: "Confirmed the current priorities and logged the next action items for the project team.",
+      occurredAt: daysAgo(index + 3, 15, 15),
+    },
+  ]);
+  await db.insert(notes).values(projectNoteRows);
+
+  const projectTaskRows = [
+    ["Build contractor onboarding kit", "Outline the welcome packet", "tomas", "open"],
+    ["Build contractor onboarding kit", "Review handoff checklist", "jordan", "done"],
+    ["Willow Creek kickoff readiness", "Confirm property walk attendees", "jordan", "open"],
+    ["Ridgeview north expansion map", "Map undocumented irrigation zones", "maya", "open"],
+    ["Ridgeview north expansion map", "Upload draft map for QA", "maya", "done"],
+    ["Crew tablet refresh", "Inventory current field tablets", "tomas", "open"],
+    ["Stonegate board scope packet", "Collect final snow scope details", "randy", "blocked"],
+    ["Knowledge base cleanup", "Confirm document retention owner", "jordan", "blocked"],
+    ["Lantern Hill training rollout", "Deliver manager training", "tomas", "done"],
+    ["Q2 operations retrospective", "Publish agreed process improvements", "randy", "done"],
+  ].map(([projectName, title, assigneeKey, status], index) => ({
+    title,
+    projectId: projectByName[projectName].id,
+    role: index % 3 === 0 ? "sales" : index % 3 === 1 ? "mapping" : "admin",
+    assigneeUserId: ownerIds[assigneeKey],
+    dueDate: daysFromNow(index + 1),
+    status,
+    source: "manual",
+    completedAt: status === "done" ? daysAgo(1, 16, 0) : null,
+  }));
+  await db.insert(tasks).values(projectTaskRows);
 
   // Templates and their items.
   const itemIdsByTemplate = {};
@@ -661,7 +742,8 @@ async function seed() {
   console.log(
     `Seeded ${insertedUsers.length} users, ${insertedCustomers.length} customers, ` +
       `${insertedLayers.length} layers, ${insertedContacts.length} contacts, ` +
-      `${insertedNotes.length} notes, ${insertedTasks.length} tasks`
+      `${insertedNotes.length} customer notes, ${insertedTasks.length} customer tasks, ` +
+      `${insertedProjects.length} projects`
   );
 }
 

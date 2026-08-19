@@ -28,6 +28,8 @@ function byWeight(a, b) {
 export default function TeamTodo({ composerOpen, onComposerClose, grouping }) {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [role, setRole] = useState("all");
   const [view, setView] = useState("none");
 
@@ -37,7 +39,13 @@ export default function TeamTodo({ composerOpen, onComposerClose, grouping }) {
 
   useEffect(() => {
     load();
-    api.users().then(setUsers);
+    Promise.all([api.users(), api.customers(), api.projects()]).then(
+      ([userRows, customerRows, projectRows]) => {
+        setUsers(userRows);
+        setCustomers(customerRows);
+        setProjects(projectRows);
+      }
+    );
   }, []);
 
   const assignable = users.filter((u) => u.role);
@@ -71,7 +79,7 @@ export default function TeamTodo({ composerOpen, onComposerClose, grouping }) {
     if (grouping === "customer") {
       const groups = new Map();
       for (const t of filtered) {
-        const key = t.customerName || "Internal";
+        const key = t.customerName || t.projectName || "Internal";
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(t);
       }
@@ -135,6 +143,8 @@ export default function TeamTodo({ composerOpen, onComposerClose, grouping }) {
       {composerOpen && (
         <TaskComposer
           users={users}
+          customers={customers}
+          projects={projects}
           onSaved={() => {
             load();
             if (onComposerClose) onComposerClose();

@@ -25,6 +25,7 @@ export const api = {
   customers: () => request("/api/customers"),
   customer: (id) => request(`/api/customers/${id}`),
   notes: (customerId) => request(`/api/notes?customerId=${customerId}`),
+  projectNotes: (projectId) => request(`/api/notes?projectId=${projectId}`),
   createNote: (data) =>
     request("/api/notes", { method: "POST", body: JSON.stringify(data) }),
   contacts: (customerId) => request(`/api/contacts?customerId=${customerId}`),
@@ -40,6 +41,15 @@ export const api = {
     request("/api/tasks", { method: "POST", body: JSON.stringify(data) }),
   updateTask: (id, data) =>
     request(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  projects: () => request("/api/projects"),
+  project: (id) => request(`/api/projects/${id}`),
+  createProject: (data) =>
+    request("/api/projects", { method: "POST", body: JSON.stringify(data) }),
+  updateProject: (id, data) =>
+    request(`/api/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
   changeStage: (customerId, stage, reason) =>
     request(`/api/customers/${customerId}/stage`, {
       method: "POST",

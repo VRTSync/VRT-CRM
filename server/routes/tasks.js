@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { tasks, customers, users } from "../db/schema.js";
+import { tasks, customers, projects, users } from "../db/schema.js";
 import { requireAuth } from "../auth.js";
 
 const router = Router();
@@ -30,7 +30,7 @@ async function validateAssignee(assigneeUserId) {
 // not need extra lookups for the row meta line.
 router.get("/", requireAuth, async (req, res, next) => {
   try {
-    const { customerId, assigneeUserId, role, status, unassigned } = req.query;
+    const { customerId, projectId, assigneeUserId, role, status, unassigned } = req.query;
     const conditions = [];
     if (customerId !== undefined) {
       const id = Number(customerId);
@@ -38,6 +38,13 @@ router.get("/", requireAuth, async (req, res, next) => {
         return res.status(400).json({ error: "Invalid customerId" });
       }
       conditions.push(eq(tasks.customerId, id));
+    }
+    if (projectId !== undefined) {
+      const id = Number(projectId);
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: "Invalid projectId" });
+      }
+      conditions.push(eq(tasks.projectId, id));
     }
     if (assigneeUserId !== undefined) {
       const id = Number(assigneeUserId);
@@ -66,18 +73,21 @@ router.get("/", requireAuth, async (req, res, next) => {
       .select({
         task: tasks,
         customerName: customers.name,
+        projectName: projects.name,
         assigneeName: users.name,
       })
       .from(tasks)
       .leftJoin(customers, eq(tasks.customerId, customers.id))
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
       .leftJoin(users, eq(tasks.assigneeUserId, users.id))
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(tasks.dueDate, tasks.id);
 
     res.json(
-      rows.map(({ task, customerName, assigneeName }) => ({
+      rows.map(({ task, customerName, projectName, assigneeName }) => ({
         ...task,
         customerName,
+        projectName,
         assigneeName,
       }))
     );
@@ -93,6 +103,7 @@ router.post("/", requireAuth, async (req, res, next) => {
       title,
       description,
       customerId,
+      projectId,
       role,
       assigneeUserId,
       dueDate,
@@ -106,6 +117,31 @@ router.post("/", requireAuth, async (req, res, next) => {
     if (!title || !String(title).trim()) {
       return res.status(400).json({ error: "Title is required" });
     }
+    const hasCustomer = customerId !== undefined && customerId !== null;
+    const hasProject = projectId !== undefined && projectId !== null;
+    if (hasCustomer === hasProject) {
+      return res.status(400).json({
+        error: "Provide exactly one of customerId or projectId",
+      });
+    }
+    if (hasCustomer && !Number.isInteger(customerId)) {
+      return res.status(400).json({ error: "Invalid customerId" });
+    }
+    if (hasProject && !Number.isInteger(projectId)) {
+      return res.status(400).json({ error: "Invalid projectId" });
+    }
+    const parentTable = hasCustomer ? customers : projects;
+    const parentColumn = hasCustomer ? customers.id : projects.id;
+    const parentId = hasCustomer ? customerId : projectId;
+    const [parent] = await db
+      .select({ id: parentColumn })
+      .from(parentTable)
+      .where(eq(parentColumn, parentId));
+    if (!parent) {
+      return res.status(400).json({
+        error: hasCustomer ? "Customer not found" : "Project not found",
+      });
+    }
     if (role !== undefined && role !== null && !TASK_ROLES.includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
     }
@@ -118,7 +154,8 @@ router.post("/", requireAuth, async (req, res, next) => {
       .values({
         title: String(title).trim(),
         description: description || null,
-        customerId: customerId ?? null,
+        customerId: hasCustomer ? customerId : null,
+        projectId: hasProject ? projectId : null,
         role: role || null,
         assigneeUserId: assigneeUserId ?? null,
         dueDate: dueDate || null,

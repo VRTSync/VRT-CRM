@@ -11,7 +11,7 @@ const KINDS = [
   { id: "note", label: "Note" },
 ];
 
-export default function NoteComposer({ customerId, onSaved }) {
+export default function NoteComposer({ customerId, projectId, onSaved }) {
   const [body, setBody] = useState("");
   const [kind, setKind] = useState("note");
   const [focused, setFocused] = useState(false);
@@ -25,7 +25,12 @@ export default function NoteComposer({ customerId, onSaved }) {
     setSaving(true);
     setError(null);
     try {
-      await api.createNote({ customerId, kind, body });
+      await api.createNote({
+        customerId: customerId ?? undefined,
+        projectId: projectId ?? undefined,
+        kind,
+        body,
+      });
       setBody("");
       if (onSaved) onSaved();
     } catch (err) {

@@ -29,7 +29,7 @@ export default function TaskRow({ task, onToggle, onAssign, users }) {
       <div className="grow">
         <div className="r-title">{task.title}</div>
         <div className="r-meta">
-          <span>{task.customerName || "Internal"}</span>
+          <span>{task.customerName || task.projectName || "Internal"}</span>
           {(task.assigneeName || task.role) && <span className="sep">&middot;</span>}
           {task.assigneeName ? (
             <span>{task.assigneeName}</span>

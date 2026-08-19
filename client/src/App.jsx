@@ -5,6 +5,8 @@ import CustomersPage from "./pages/CustomersPage.jsx";
 import CustomerRecord from "./pages/CustomerRecord.jsx";
 import TeamTodo from "./pages/TeamTodo.jsx";
 import TaskTemplates from "./pages/TaskTemplates.jsx";
+import ProjectsPage from "./pages/ProjectsPage.jsx";
+import ProjectRecord from "./pages/ProjectRecord.jsx";
 import { OpenCustomerContext } from "./lib/openCustomer.js";
 import { api } from "./lib/api.js";
 
@@ -20,12 +22,6 @@ const SCREENS = [
     title: "Customers",
     subtitle: "All communities and the active pipeline",
     action: "+ New Customer",
-  },
-  {
-    path: "/projects",
-    title: "Projects",
-    subtitle: "Internal work not tied to one customer",
-    action: "+ New Project",
   },
   {
     path: "/templates",
@@ -151,6 +147,11 @@ export default function App() {
     <OpenCustomerContext.Provider value={openCustomerValue}>
     <Routes>
       <Route path="/customers" element={<CustomersPage user={state.user} />} />
+      <Route path="/projects" element={<ProjectsPage user={state.user} />} />
+      <Route
+        path="/projects/:id"
+        element={<ProjectRecord user={state.user} />}
+      />
       {SCREENS.filter((screen) => screen.path !== "/customers").map((screen) => (
         <Route
           key={screen.path}

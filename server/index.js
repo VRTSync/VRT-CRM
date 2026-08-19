@@ -9,6 +9,7 @@ import notesRouter from "./routes/notes.js";
 import contactsRouter from "./routes/contacts.js";
 import tasksRouter from "./routes/tasks.js";
 import templatesRouter from "./routes/templates.js";
+import projectsRouter from "./routes/projects.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,6 +24,7 @@ app.use("/api/customers", customersRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/contacts", contactsRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/projects", projectsRouter);
 app.use("/api", templatesRouter);
 
 // In production the Vite client is built ahead of time into client/dist.

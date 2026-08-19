@@ -11,26 +11,44 @@ const ROLES = [
   { id: "admin", label: "Admin" },
 ];
 
-export default function TaskComposer({ customerId, users = [], onSaved, onCancel }) {
+export default function TaskComposer({
+  customerId,
+  projectId,
+  customers = [],
+  projects = [],
+  users = [],
+  onSaved,
+  onCancel,
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [role, setRole] = useState("");
   const [assignee, setAssignee] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [context, setContext] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   const assignable = users.filter((u) => u.role);
+  const needsContext = customerId === undefined && projectId === undefined;
 
   async function save() {
-    if (!title.trim() || saving) return;
+    if (!title.trim() || saving || (needsContext && !context)) return;
     setSaving(true);
     setError(null);
     try {
+      let selectedCustomerId = customerId;
+      let selectedProjectId = projectId;
+      if (needsContext) {
+        const [type, id] = context.split(":");
+        selectedCustomerId = type === "customer" ? Number(id) : undefined;
+        selectedProjectId = type === "project" ? Number(id) : undefined;
+      }
       await api.createTask({
         title: title.trim(),
         description: description.trim() || null,
-        customerId: customerId ?? null,
+        customerId: selectedCustomerId,
+        projectId: selectedProjectId,
         role: role || null,
         assigneeUserId: assignee ? Number(assignee) : null,
         dueDate: dueDate || null,
@@ -40,6 +58,7 @@ export default function TaskComposer({ customerId, users = [], onSaved, onCancel
       setRole("");
       setAssignee("");
       setDueDate("");
+      setContext("");
       if (onSaved) onSaved();
     } catch (err) {
       setError(err.message || "Could not save the task");
@@ -68,6 +87,30 @@ export default function TaskComposer({ customerId, users = [], onSaved, onCancel
         />
       </div>
       <div className="c-actions">
+        {needsContext && (
+          <select
+            className="tc-select"
+            aria-label="Task context"
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+          >
+            <option value="">Select customer or project</option>
+            <optgroup label="Customers">
+              {customers.map((customer) => (
+                <option key={`customer-${customer.id}`} value={`customer:${customer.id}`}>
+                  {customer.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Projects">
+              {projects.map((project) => (
+                <option key={`project-${project.id}`} value={`project:${project.id}`}>
+                  {project.name}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+        )}
         <select
           className="tc-select"
           aria-label="Role"
@@ -110,7 +153,7 @@ export default function TaskComposer({ customerId, users = [], onSaved, onCancel
           type="button"
           className="btn primary sm"
           onClick={save}
-          disabled={!title.trim() || saving}
+          disabled={!title.trim() || saving || (needsContext && !context)}
         >
           {saving ? "Saving..." : "Add task"}
         </button>

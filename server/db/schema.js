@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   date,
   integer,
   numeric,
@@ -76,6 +77,15 @@ export const taskSource = pgEnum("task_source", [
 // The role a task belongs to. Owner is not a task role.
 export const taskRole = pgEnum("task_role", ["sales", "mapping", "admin"]);
 
+// Projects are operational work, independent of the customer stage pipeline.
+// They can be customer-linked or stand alone.
+export const projectStatus = pgEnum("project_status", [
+  "backlog",
+  "in_progress",
+  "blocked",
+  "done",
+]);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   googleSub: text("google_sub").notNull().unique(),
@@ -89,8 +99,7 @@ export const users = pgTable("users", {
     .defaultNow(),
 });
 
-// Tasks per spec 9. project_id and template_item_id are plain integers this
-// slice; their target tables arrive in slices 4 and 6.
+// Tasks belong to exactly one customer or project context when created.
 export const tasks = pgTable(
   "tasks",
   {
@@ -98,7 +107,7 @@ export const tasks = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     customerId: integer("customer_id").references(() => customers.id),
-    projectId: integer("project_id"),
+    projectId: integer("project_id").references(() => projects.id),
     role: taskRole("role"),
     assigneeUserId: integer("assignee_user_id").references(() => users.id),
     dueDate: date("due_date"),
@@ -116,6 +125,10 @@ export const tasks = pgTable(
     uniqueIndex("tasks_customer_template_item_uniq")
       .on(table.customerId, table.templateItemId)
       .where(sql`${table.templateItemId} is not null`),
+    check(
+      "tasks_exactly_one_parent_check",
+      sql`(${table.customerId} is not null) <> (${table.projectId} is not null)`
+    ),
   ]
 );
 
@@ -153,24 +166,33 @@ export const contacts = pgTable("contacts", {
 // from_stage and to_stage are set only by stage change notes, which the
 // stage change engine writes in a later slice. This table is the full
 // stage history. There is no separate table.
-export const notes = pgTable("notes", {
-  id: serial("id").primaryKey(),
-  customerId: integer("customer_id").references(() => customers.id),
-  projectId: integer("project_id"),
-  authorUserId: integer("author_user_id")
-    .notNull()
-    .references(() => users.id),
-  kind: noteKind("kind").notNull(),
-  body: text("body").notNull(),
-  occurredAt: timestamp("occurred_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  fromStage: customerStage("from_stage"),
-  toStage: customerStage("to_stage"),
-});
+export const notes = pgTable(
+  "notes",
+  {
+    id: serial("id").primaryKey(),
+    customerId: integer("customer_id").references(() => customers.id),
+    projectId: integer("project_id").references(() => projects.id),
+    authorUserId: integer("author_user_id")
+      .notNull()
+      .references(() => users.id),
+    kind: noteKind("kind").notNull(),
+    body: text("body").notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    fromStage: customerStage("from_stage"),
+    toStage: customerStage("to_stage"),
+  },
+  (table) => [
+    check(
+      "notes_exactly_one_parent_check",
+      sql`(${table.customerId} is not null) <> (${table.projectId} is not null)`
+    ),
+  ]
+);
 
 // Task templates per spec 9. trigger_stage is nullable: Annual Renewal and
 // Post-Meeting Follow-up are seeded config with no trigger. Nothing fires
@@ -217,6 +239,21 @@ export const customers = pgTable("customers", {
   renewalDate: date("renewal_date"),
   source: text("source"),
   status: text("status"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: projectStatus("status").notNull().default("backlog"),
+  customerId: integer("customer_id").references(() => customers.id),
+  leadUserId: integer("lead_user_id")
+    .notNull()
+    .references(() => users.id),
+  targetDate: date("target_date"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

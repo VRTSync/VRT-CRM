@@ -49,3 +49,17 @@ export const STAGE_ORDER = [
   "training",
   "live",
 ];
+
+export const PROJECT_STATUS_LABELS = {
+  backlog: "Backlog",
+  in_progress: "In Progress",
+  blocked: "Blocked",
+  done: "Done",
+};
+
+export const PROJECT_STATUS_ORDER = [
+  "backlog",
+  "in_progress",
+  "blocked",
+  "done",
+];
