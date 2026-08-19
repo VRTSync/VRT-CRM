@@ -340,10 +340,6 @@ tr.row-link{cursor:pointer}
 .deal[draggable="true"]{cursor:grab}
 .deal-open{display:block;width:100%;text-align:left}
 .deal-open span{display:block}
-.deal-stage-control{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);
-  font-size:var(--fs-2xs);color:var(--muted)}
-.deal-stage-control select{min-width:0;flex:1;font:inherit;color:var(--ink-2);background:var(--card);
-  border:1px solid var(--line);border-radius:var(--radius-sm);padding:2px var(--sp-2)}
 .deal-error{font-size:var(--fs-xs);color:var(--alarm-ink);background:var(--alarm-soft);
   border-radius:var(--radius-sm);padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-3)}
 .prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:var(--sp-4)}

@@ -1,5 +1,4 @@
 import Avatar from "./Avatar.jsx";
-import { STAGE_ORDER, STAGE_LABELS } from "../lib/format.js";
 
 export default function DealCard({
   customer,
@@ -7,7 +6,6 @@ export default function DealCard({
   progress,
   error,
   onOpen,
-  onMove,
   onDragStart,
 }) {
   const statusLabel = customer.status || (customer.stage === "live" ? "Live" : "Active");
@@ -45,18 +43,6 @@ export default function DealCard({
           {statusLabel}
         </span>
       </div>
-      <label className="deal-stage-control">
-        <span>Move to</span>
-        <select
-          value={customer.stage}
-          onChange={(event) => onMove(customer, event.target.value)}
-          aria-label={`Move ${customer.name} to another stage`}
-        >
-          {STAGE_ORDER.map((stage) => (
-            <option key={stage} value={stage}>{STAGE_LABELS[stage]}</option>
-          ))}
-        </select>
-      </label>
       {error && <div className="deal-error" role="alert">{error}</div>}
     </article>
   );

@@ -144,7 +144,6 @@ export default function PipelineBoard({
                   progress={getProgress(customer, templateByStage, tasksByCustomer)}
                   error={cardErrors[customer.id]}
                   onOpen={(id) => navigate(`/customers/${id}`)}
-                  onMove={requestMove}
                   onDragStart={(event, draggedCustomer) => {
                     setDraggedId(draggedCustomer.id);
                     event.dataTransfer.effectAllowed = "move";
