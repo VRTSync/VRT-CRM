@@ -3,6 +3,8 @@ import { eq, max, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { customers, customerLayers, notes } from "../db/schema.js";
 import { requireAuth } from "../auth.js";
+import { STAGE_ORDER } from "../lib/stageOrder.js";
+import { changeStage, ReasonRequiredError } from "../lib/stageEngine.js";
 
 const router = Router();
 
@@ -68,6 +70,60 @@ router.get("/:id", requireAuth, async (req, res, next) => {
     );
     res.json({ ...customer, layers, annualValue });
   } catch (err) {
+    next(err);
+  }
+});
+
+// Stage change. The engine in server/lib/stageEngine.js runs all of spec
+// section 10 in one transaction. A reason is required on any backward move,
+// any forward move that skips a stage, and any forward move that leaves
+// open checklist items for the current stage.
+router.post("/:id/stage", requireAuth, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: "Invalid customer id" });
+    }
+    const { stage, reason } = req.body || {};
+    if (!STAGE_ORDER.includes(stage)) {
+      return res.status(400).json({ error: "Invalid stage" });
+    }
+    const [customer] = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, id));
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if (customer.stage === stage) {
+      return res
+        .status(400)
+        .json({ error: "Customer is already in that stage" });
+    }
+    const trimmedReason =
+      typeof reason === "string" && reason.trim() ? reason.trim() : null;
+    // The engine re-reads and locks the customer inside its transaction,
+    // enforces the reason requirement there, and returns null when the
+    // customer vanished or is already in the target stage.
+    const updated = await changeStage({
+      customerId: id,
+      toStage: stage,
+      reason: trimmedReason,
+      authorUserId: req.user.id,
+    });
+    if (!updated) {
+      return res
+        .status(409)
+        .json({ error: "Customer changed while processing, retry" });
+    }
+    res.json(updated);
+  } catch (err) {
+    if (err instanceof ReasonRequiredError) {
+      return res.status(400).json({
+        error: "A reason is required for this move",
+        reasonRequired: true,
+      });
+    }
     next(err);
   }
 });

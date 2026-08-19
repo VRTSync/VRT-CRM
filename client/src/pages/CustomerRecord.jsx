@@ -16,6 +16,7 @@ import Timeline from "../components/Timeline.jsx";
 import ContactsTable from "../components/ContactsTable.jsx";
 import TaskRow from "../components/TaskRow.jsx";
 import TaskComposer from "../components/TaskComposer.jsx";
+import StageSelector from "../components/StageSelector.jsx";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -46,6 +47,29 @@ export default function CustomerRecord() {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [addingTask, setAddingTask] = useState(false);
+  const [checklistItemIds, setChecklistItemIds] = useState([]);
+
+  // Item ids for the template whose trigger stage is the customer's
+  // current stage. The Overview checklist filters tasks by these.
+  function loadChecklist(stage) {
+    api.getTemplates().then((templates) => {
+      const tpl = templates.find((t) => t.triggerStage === stage && t.isActive);
+      if (!tpl) {
+        setChecklistItemIds([]);
+        return;
+      }
+      api
+        .getTemplate(tpl.id)
+        .then((full) => setChecklistItemIds(full.items.map((i) => i.id)));
+    });
+  }
+
+  function onStageChanged(updated) {
+    setCustomer((prev) => ({ ...prev, ...updated }));
+    loadChecklist(updated.stage);
+    loadNotes();
+    loadTasks();
+  }
 
   function loadNotes() {
     api.notes(customerId).then(setNotes);
@@ -66,6 +90,7 @@ export default function CustomerRecord() {
     api.customer(customerId).then((c) => {
       setCustomer(c);
       setOpenCustomer({ id: c.id, name: c.name });
+      loadChecklist(c.stage);
     });
     api.contacts(customerId).then(setContacts);
     api.users().then((list) => {
@@ -101,12 +126,15 @@ export default function CustomerRecord() {
               <span className="ch-alarm" />
             </div>
           </div>
-          <div className="ch-money">
-            <b>{formatMoney(customer.annualValue)}</b>
-            <span>
-              annual value
-              {customer.termYears ? `, ${customer.termYears} year term` : ""}
-            </span>
+          <div className="ch-trail">
+            <StageSelector customer={customer} onChanged={onStageChanged} />
+            <div className="ch-money">
+              <b>{formatMoney(customer.annualValue)}</b>
+              <span>
+                annual value
+                {customer.termYears ? `, ${customer.termYears} year term` : ""}
+              </span>
+            </div>
           </div>
         </div>
         <FactRow
@@ -131,6 +159,7 @@ export default function CustomerRecord() {
         <Stepper
           stage={customer.stage}
           stageEnteredAt={customer.stageEnteredAt}
+          notes={notes}
         />
         <Tabs tabs={TABS} active={tab} onChange={setTab} />
       </div>
@@ -143,11 +172,27 @@ export default function CustomerRecord() {
               <div className="card-head">
                 <h2>Stage Checklist, {STAGE_LABELS[customer.stage]}</h2>
               </div>
-              <div className="card-body">
-                <p className="hint">
-                  No checklist items yet. Stage checklists arrive with task
-                  templates.
-                </p>
+              <div className="card-body flush">
+                {(() => {
+                  const checklistTasks = tasks.filter(
+                    (t) =>
+                      t.templateItemId &&
+                      checklistItemIds.includes(t.templateItemId)
+                  );
+                  if (!checklistTasks.length) {
+                    return (
+                      <div className="row">
+                        <div className="grow r-meta">
+                          Nothing open. Add a task or wait for the next stage
+                          change.
+                        </div>
+                      </div>
+                    );
+                  }
+                  return checklistTasks.map((t) => (
+                    <TaskRow key={t.id} task={t} onToggle={toggleTask} />
+                  ));
+                })()}
               </div>
               <div className="card-foot">
                 You can advance with items still open. You will be asked why,

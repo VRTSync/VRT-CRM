@@ -35,7 +35,10 @@ export const STAGE_LABELS = {
   churned: "Churned",
 };
 
-// Eight stepper stages in fixed order. churned never appears.
+// Eight stage keys for display only (labels, selector options, stepper
+// rendering). The source of truth for the order and for all move direction
+// logic is server/lib/stageOrder.js. The server decides whether a move is
+// forward, backward, or a skip; the client never classifies a move.
 export const STAGE_ORDER = [
   "lead",
   "discovery",

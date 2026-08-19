@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -8,6 +9,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // Role is nullable: a user with a null role can sign in and read but
@@ -89,23 +91,33 @@ export const users = pgTable("users", {
 
 // Tasks per spec 9. project_id and template_item_id are plain integers this
 // slice; their target tables arrive in slices 4 and 6.
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  customerId: integer("customer_id").references(() => customers.id),
-  projectId: integer("project_id"),
-  role: taskRole("role"),
-  assigneeUserId: integer("assignee_user_id").references(() => users.id),
-  dueDate: date("due_date"),
-  status: taskStatus("status").notNull().default("open"),
-  source: taskSource("source").notNull().default("manual"),
-  templateItemId: integer("template_item_id"),
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description"),
+    customerId: integer("customer_id").references(() => customers.id),
+    projectId: integer("project_id"),
+    role: taskRole("role"),
+    assigneeUserId: integer("assignee_user_id").references(() => users.id),
+    dueDate: date("due_date"),
+    status: taskStatus("status").notNull().default("open"),
+    source: taskSource("source").notNull().default("manual"),
+    templateItemId: integer("template_item_id"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // A customer can only ever have one task per template item, whatever
+    // its status. This backs the stage engine dedupe against races.
+    uniqueIndex("tasks_customer_template_item_uniq")
+      .on(table.customerId, table.templateItemId)
+      .where(sql`${table.templateItemId} is not null`),
+  ]
+);
 
 // Exactly four rows per customer, one per layer, created with the customer.
 // A layer is never deleted, only marked out of scope.
@@ -158,6 +170,30 @@ export const notes = pgTable("notes", {
     .defaultNow(),
   fromStage: customerStage("from_stage"),
   toStage: customerStage("to_stage"),
+});
+
+// Task templates per spec 9. trigger_stage is nullable: Annual Renewal and
+// Post-Meeting Follow-up are seeded config with no trigger. Nothing fires
+// them in this slice.
+export const taskTemplates = pgTable("task_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  triggerStage: customerStage("trigger_stage"),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+export const templateItems = pgTable("template_items", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id")
+    .notNull()
+    .references(() => taskTemplates.id),
+  sequence: integer("sequence").notNull(),
+  title: text("title").notNull(),
+  role: taskRole("role").notNull(),
+  dueOffsetDays: integer("due_offset_days").notNull(),
+  // Rows referenced by existing tasks are deactivated instead of deleted,
+  // so backward-move cleanup can still map those tasks to their stage.
+  isActive: boolean("is_active").notNull().default(true),
 });
 
 // Property profile per amendment A1: acreage and fully_maintained only.

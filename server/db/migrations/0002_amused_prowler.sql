@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "tasks_customer_template_item_uniq" ON "tasks" USING btree ("customer_id","template_item_id") WHERE "tasks"."template_item_id" is not null;

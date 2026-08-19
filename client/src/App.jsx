@@ -4,6 +4,7 @@ import Shell from "./components/Shell.jsx";
 import CustomersList from "./pages/CustomersList.jsx";
 import CustomerRecord from "./pages/CustomerRecord.jsx";
 import TeamTodo from "./pages/TeamTodo.jsx";
+import TaskTemplates from "./pages/TaskTemplates.jsx";
 import { OpenCustomerContext } from "./lib/openCustomer.js";
 import { api } from "./lib/api.js";
 
@@ -161,6 +162,7 @@ export default function App() {
               action={screen.action}
             >
               {screen.path === "/customers" && <CustomersList />}
+              {screen.path === "/templates" && <TaskTemplates />}
             </Shell>
           }
         />

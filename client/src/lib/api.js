@@ -40,4 +40,26 @@ export const api = {
     request("/api/tasks", { method: "POST", body: JSON.stringify(data) }),
   updateTask: (id, data) =>
     request(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  changeStage: (customerId, stage, reason) =>
+    request(`/api/customers/${customerId}/stage`, {
+      method: "POST",
+      body: JSON.stringify({ stage, reason }),
+    }),
+  getTemplates: () => request("/api/templates"),
+  getTemplate: (id) => request(`/api/templates/${id}`),
+  addTemplateItem: (templateId, data) =>
+    request(`/api/templates/${templateId}/items`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateTemplateItem: (id, data) =>
+    request(`/api/template-items/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  deleteTemplateItem: (id, confirm) =>
+    request(`/api/template-items/${id}`, {
+      method: "DELETE",
+      body: JSON.stringify({ confirm }),
+    }),
 };

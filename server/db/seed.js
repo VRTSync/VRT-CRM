@@ -10,6 +10,8 @@ import {
   contacts,
   notes,
   tasks,
+  taskTemplates,
+  templateItems,
 } from "./schema.js";
 
 const SEED_USERS = [
@@ -327,10 +329,135 @@ const TASK_PLANS = [
   ["Archive churned account records", null, "admin", null, null, "done"],
 ];
 
+// The six shipped templates per spec 7.6. Signed to Onboarding matches the
+// spec row for row. Annual Renewal and Post-Meeting Follow-up carry a null
+// trigger_stage: they are seeded config and nothing fires them in v1.
+// [name, triggerStage, [title, role, dueOffsetDays][]]
+const TEMPLATE_PLANS = [
+  [
+    "Signed to Onboarding",
+    "signed",
+    [
+      ["Countersign agreement and file executed copy", "admin", 1],
+      ["Send welcome email and onboarding overview", "sales", 1],
+      ["Schedule kickoff call with management and board", "sales", 2],
+      ["Collect plat maps, as-builts, and irrigation records", "mapping", 3],
+      ["Collect contractor and vendor contact list", "admin", 3],
+      ["Create platform accounts for board and manager", "admin", 5],
+      ["Schedule property walk for asset verification", "mapping", 7],
+      ["Set up billing record and first invoice", "admin", 10],
+      ["Confirm data handoff complete, advance to Mapping", "sales", 14],
+    ],
+  ],
+  [
+    "Property Mapping",
+    "mapping",
+    [
+      ["Complete property walk and photo pass", "mapping", 2],
+      ["Digitize irrigation zones from as-builts", "mapping", 4],
+      ["Map beds, turf areas, and tree inventory", "mapping", 6],
+      ["Map snow routes and priority areas", "mapping", 8],
+      ["Reconcile mapped acreage against the agreement", "mapping", 9],
+      ["Review map draft with community manager", "sales", 11],
+      ["Publish final map and confirm QA checklist", "mapping", 12],
+    ],
+  ],
+  [
+    "Data Load",
+    "data_load",
+    [
+      ["Import contractor and vendor records", "admin", 2],
+      ["Load service schedules and scopes", "admin", 4],
+      ["Link contracts and documents to the record", "admin", 5],
+      ["Verify loaded data against source files", "mapping", 6],
+      ["Confirm data load complete with manager", "sales", 7],
+    ],
+  ],
+  [
+    "Training and Go Live",
+    "training",
+    [
+      ["Schedule training sessions with board and manager", "admin", 2],
+      ["Deliver manager training session", "sales", 5],
+      ["Deliver board overview session", "sales", 7],
+      ["Confirm contractor access and mobile setup", "admin", 8],
+      ["Run go live readiness check", "admin", 10],
+      ["Switch account to Live and announce", "sales", 12],
+    ],
+  ],
+  [
+    "Annual Renewal",
+    null,
+    [
+      ["Re-walk property and note scope changes", "mapping", 5],
+      ["Prepare renewal quote", "sales", 10],
+      ["Review renewal with board", "sales", 20],
+      ["File signed renewal and update record", "admin", 30],
+    ],
+  ],
+  [
+    "Post-Meeting Follow-up",
+    null,
+    [
+      ["Send meeting recap to attendees", "sales", 1],
+      ["Log action items as tasks", "admin", 1],
+      ["Schedule follow-up touchpoint", "sales", 5],
+    ],
+  ],
+];
+
+// Two test fixtures for the slice 4 DONE WHEN sequence: one customer at
+// Proposal with a clean history, one at Signed with a mix of completed and
+// open template tasks.
+const FIXTURE_CUSTOMERS = (ownerIds) => [
+  {
+    name: "Birchwood Meadows HOA",
+    managementCompany: "Meridian Management",
+    isSelfManaged: false,
+    unitCount: 132,
+    acreage: "17.90",
+    fullyMaintained: false,
+    stage: "proposal",
+    stageEnteredAt: daysAgo(4),
+    ownerUserId: ownerIds.jordan,
+    source: "Referral",
+    status: "active",
+  },
+  {
+    name: "Copper Sky Estates",
+    managementCompany: "Anchor Realty",
+    isSelfManaged: false,
+    unitCount: 158,
+    acreage: "20.30",
+    fullyMaintained: true,
+    stage: "signed",
+    stageEnteredAt: daysAgo(3),
+    ownerUserId: ownerIds.randy,
+    termYears: 3,
+    source: "Referral",
+    status: "active",
+  },
+];
+
+const FIXTURE_LAYERS = {
+  "Birchwood Meadows HOA": [
+    ["property", true, "21800.00"],
+    ["irrigation", true, "7400.00"],
+    ["trees", false, null],
+    ["snow", false, null],
+  ],
+  "Copper Sky Estates": [
+    ["property", true, "26500.00"],
+    ["irrigation", true, "9100.00"],
+    ["trees", true, "4100.00"],
+    ["snow", true, "5900.00"],
+  ],
+};
+
 async function seed() {
   // Reset. Truncate keeps the schema and restarts ids so reruns are stable.
   await db.execute(
-    sql`TRUNCATE TABLE tasks, notes, contacts, customer_layers, customers, users RESTART IDENTITY CASCADE`
+    sql`TRUNCATE TABLE tasks, notes, contacts, customer_layers, customers, template_items, task_templates, users RESTART IDENTITY CASCADE`
   );
 
   const insertedUsers = await db.insert(users).values(SEED_USERS).returning();
@@ -456,6 +583,81 @@ async function seed() {
   );
   const insertedTasks = await db.insert(tasks).values(taskRows).returning();
 
+  // Templates and their items.
+  const itemIdsByTemplate = {};
+  let templateCount = 0;
+  let itemCount = 0;
+  for (const [name, triggerStage, items] of TEMPLATE_PLANS) {
+    const [tpl] = await db
+      .insert(taskTemplates)
+      .values({ name, triggerStage, isActive: true })
+      .returning();
+    const inserted = await db
+      .insert(templateItems)
+      .values(
+        items.map(([title, role, dueOffsetDays], i) => ({
+          templateId: tpl.id,
+          sequence: i + 1,
+          title,
+          role,
+          dueOffsetDays,
+        }))
+      )
+      .returning();
+    itemIdsByTemplate[name] = inserted;
+    templateCount += 1;
+    itemCount += inserted.length;
+  }
+
+  // Test fixtures for the slice 4 DONE WHEN sequence.
+  const insertedFixtures = await db
+    .insert(customers)
+    .values(FIXTURE_CUSTOMERS(ownerIds))
+    .returning();
+  const fixtureLayerRows = [];
+  for (const c of insertedFixtures) {
+    for (const [layer, inScope, annualPrice] of FIXTURE_LAYERS[c.name]) {
+      fixtureLayerRows.push({ customerId: c.id, layer, inScope, annualPrice });
+    }
+  }
+  await db.insert(customerLayers).values(fixtureLayerRows);
+
+  // Copper Sky Estates sits at Signed with a mix of completed and open
+  // template tasks, plus the system note its forward move would have left.
+  const copperSky = insertedFixtures.find((c) => c.name === "Copper Sky Estates");
+  const signedItems = itemIdsByTemplate["Signed to Onboarding"];
+  await db.insert(notes).values({
+    customerId: copperSky.id,
+    authorUserId: ownerIds.randy,
+    kind: "system",
+    body: "Advanced from Proposal to Signed.",
+    fromStage: "proposal",
+    toStage: "signed",
+    occurredAt: daysAgo(3, 9, 0),
+  });
+  await db.insert(tasks).values(
+    signedItems.map((item, i) => ({
+      title: item.title,
+      customerId: copperSky.id,
+      role: item.role,
+      assigneeUserId:
+        item.role === "sales"
+          ? ownerIds.jordan
+          : item.role === "mapping"
+            ? ownerIds.maya
+            : ownerIds.tomas,
+      dueDate: daysFromNow(item.dueOffsetDays - 3),
+      status: i < 3 ? "done" : "open",
+      source: "template",
+      templateItemId: item.id,
+      completedAt: i < 3 ? daysAgo(1, 15, 0) : null,
+    }))
+  );
+
+  console.log(
+    `Seeded ${templateCount} templates with ${itemCount} items, ` +
+      `${insertedFixtures.length} fixture customers`
+  );
   console.log(
     `Seeded ${insertedUsers.length} users, ${insertedCustomers.length} customers, ` +
       `${insertedLayers.length} layers, ${insertedContacts.length} contacts, ` +
