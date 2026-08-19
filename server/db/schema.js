@@ -99,7 +99,8 @@ export const users = pgTable("users", {
     .defaultNow(),
 });
 
-// Tasks belong to exactly one customer or project context when created.
+// Tasks may be linked to a customer, a project, or neither. They may never
+// be linked to both.
 export const tasks = pgTable(
   "tasks",
   {
@@ -125,10 +126,6 @@ export const tasks = pgTable(
     uniqueIndex("tasks_customer_template_item_uniq")
       .on(table.customerId, table.templateItemId)
       .where(sql`${table.templateItemId} is not null`),
-    check(
-      "tasks_exactly_one_parent_check",
-      sql`(${table.customerId} is not null) <> (${table.projectId} is not null)`
-    ),
   ]
 );
 

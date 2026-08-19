@@ -286,8 +286,8 @@ function daysFromNow(n) {
 
 // At least 30 tasks, all source=manual, spread across the four role-holding
 // users plus an unassigned set. Every badge variant appears: overdue,
-// due today, due this week, blocked, done. Rows with a null customer are
-// assigned to standalone projects below. [title, customerName|null, role,
+// due today, due this week, blocked, done. A few have null customer so
+// "Internal" renders. [title, customerName|null, role,
 // assigneeKey|null, dueOffsetDays|null, status]
 const TASK_PLANS = [
   // Jordan, sales
@@ -329,8 +329,8 @@ const TASK_PLANS = [
   ["Archive churned account records", null, "admin", null, null, "done"],
 ];
 
-// Operational work spans every board status. A null customer name is a
-// stand-alone internal project; other projects remain visibly linked.
+// Operational work spans every board status. Some projects stand alone;
+// other projects remain visibly linked.
 const PROJECT_PLANS = [
   ["Build contractor onboarding kit", "Package field guides and handoff materials for new contractors.", "backlog", null, "tomas", 28],
   ["Willow Creek kickoff readiness", "Coordinate access, records, and the opening property walk.", "backlog", "Willow Creek HOA", "jordan", 14],
@@ -602,17 +602,12 @@ async function seed() {
   const projectByName = Object.fromEntries(
     insertedProjects.map((project) => [project.name, project])
   );
-  const internalProjectByRole = {
-    sales: projectByName["Q2 operations retrospective"].id,
-    mapping: projectByName["Crew tablet refresh"].id,
-    admin: projectByName["Build contractor onboarding kit"].id,
-  };
 
   const taskRows = TASK_PLANS.map(
     ([title, customerName, role, assigneeKey, dueOffset, status]) => ({
       title,
       customerId: customerName ? customerIdsByName[customerName] : null,
-      projectId: customerName ? null : internalProjectByRole[role],
+      projectId: null,
       role,
       assigneeUserId: assigneeKey ? assigneeIds[assigneeKey] : null,
       dueDate: dueOffset === null ? null : daysFromNow(dueOffset),

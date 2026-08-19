@@ -1,3 +1,4 @@
 - [VRTSync CRM project rules](vrtsync-rules.md) — intentionally not a monorepo; plain JS only; strict style constraints (no em dashes, no raw hex outside tokens, stage enum fixed).
-- [Main env DB setup after merges](main-env-db-setup.md) — task-agent DBs are isolated; after merges run generate+psql+seed here or all APIs 500.
+- [Main env DB setup after merges](main-env-db-setup.md) — task-agent DBs are isolated; apply migrations here after merges or APIs can 500.
 - [Preview requires artifact shim](preview-artifact-shim.md) — preview pane only shows registered artifacts; artifacts/app shim forwards to client/; don't judge preview by curl.
+- [Task and note parent rules](task-note-parent-rules.md) — tasks can be internal, customer-linked, or project-linked; notes need exactly one parent.

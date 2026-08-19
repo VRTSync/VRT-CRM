@@ -43,6 +43,13 @@
       "when": 1787164261340,
       "tag": "0005_eminent_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787172614986,
+      "tag": "0006_amazing_selene",
+      "breakpoints": true
     }
   ]
 }

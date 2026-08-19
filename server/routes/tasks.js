@@ -119,9 +119,9 @@ router.post("/", requireAuth, async (req, res, next) => {
     }
     const hasCustomer = customerId !== undefined && customerId !== null;
     const hasProject = projectId !== undefined && projectId !== null;
-    if (hasCustomer === hasProject) {
+    if (hasCustomer && hasProject) {
       return res.status(400).json({
-        error: "Provide exactly one of customerId or projectId",
+        error: "A task cannot have both customerId and projectId",
       });
     }
     if (hasCustomer && !Number.isInteger(customerId)) {
@@ -130,17 +130,19 @@ router.post("/", requireAuth, async (req, res, next) => {
     if (hasProject && !Number.isInteger(projectId)) {
       return res.status(400).json({ error: "Invalid projectId" });
     }
-    const parentTable = hasCustomer ? customers : projects;
-    const parentColumn = hasCustomer ? customers.id : projects.id;
-    const parentId = hasCustomer ? customerId : projectId;
-    const [parent] = await db
-      .select({ id: parentColumn })
-      .from(parentTable)
-      .where(eq(parentColumn, parentId));
-    if (!parent) {
-      return res.status(400).json({
-        error: hasCustomer ? "Customer not found" : "Project not found",
-      });
+    if (hasCustomer || hasProject) {
+      const parentTable = hasCustomer ? customers : projects;
+      const parentColumn = hasCustomer ? customers.id : projects.id;
+      const parentId = hasCustomer ? customerId : projectId;
+      const [parent] = await db
+        .select({ id: parentColumn })
+        .from(parentTable)
+        .where(eq(parentColumn, parentId));
+      if (!parent) {
+        return res.status(400).json({
+          error: hasCustomer ? "Customer not found" : "Project not found",
+        });
+      }
     }
     if (role !== undefined && role !== null && !TASK_ROLES.includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
