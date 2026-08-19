@@ -477,22 +477,19 @@ tr.row-link{cursor:pointer}
 .ch-trail{margin-left:auto;display:flex;align-items:flex-start;gap:var(--sp-8)}
 .ch-trail .ch-money{margin-left:0}
 .stage-select{display:flex;flex-direction:column;gap:var(--sp-2);align-items:flex-end}
-.stage-select .ss-label{font-size:10px;font-weight:var(--fw-bold);letter-spacing:.8px;
+.stage-select .ss-label{font-size:var(--fs-2xs);font-weight:var(--fw-bold);letter-spacing:.8px;
   text-transform:uppercase;color:var(--muted)}
 .stage-select select{
   font:inherit;font-size:var(--fs-sm);color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:var(--radius);padding:5px var(--sp-4);cursor:pointer}
-.stage-select select:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
 .ss-reason{display:flex;gap:var(--sp-2);align-items:center}
 .ss-reason input{
   font:inherit;font-size:var(--fs-xs);color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:var(--radius-sm);padding:4px var(--sp-4);min-width:220px}
-.ss-reason input:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
 .ss-error{font-size:var(--fs-xs);color:var(--alarm-ink);max-width:280px;text-align:right}
 
 /* ---------- templates screen ---------- */
 .li-btn{width:100%;text-align:left;background:none;border:none;font:inherit;display:flex}
-.li-btn:focus-visible{outline:2px solid var(--accent-2);outline-offset:-2px}
 .tmpl-row .tmpl-actions{display:flex;gap:var(--sp-2);flex:none;margin-left:var(--sp-3)}
 .tmpl-col-head .tmpl-actions{width:96px;flex:none}
 .tmpl-row.dragging{opacity:.5}
@@ -500,7 +497,6 @@ tr.row-link{cursor:pointer}
 .tmpl-input{
   font:inherit;font-size:var(--fs-sm);color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px var(--sp-3)}
-.tmpl-input:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
 .tmpl-foot-note{margin-bottom:var(--sp-4)}
 
 /* ---------- confirm dialog ---------- */
@@ -508,7 +504,7 @@ tr.row-link{cursor:pointer}
   display:flex;align-items:center;justify-content:center;padding:var(--sp-8)}
 .modal{max-width:420px;width:100%}
 .modal-actions{display:flex;justify-content:flex-end;gap:var(--sp-3)}
-.btn.danger{background:var(--alarm);border-color:var(--alarm);color:var(--chrome-fg-hi)}
+.btn.danger{background:var(--alarm-ink);border-color:var(--alarm-ink);color:var(--chrome-fg-hi)}
 .btn.danger:hover{background:var(--alarm-ink);border-color:var(--alarm-ink)}
 
 /* ---------- login ---------- */

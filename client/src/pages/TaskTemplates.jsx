@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api.js";
 import { STAGE_LABELS } from "../lib/format.js";
 import TemplateRow from "../components/TemplateRow.jsx";
-import ConfirmDelete from "../components/ConfirmDelete.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import Avatar from "../components/Avatar.jsx";
 
 const ROLE_LABELS = { sales: "Sales", mapping: "Mapping", admin: "Admin" };
@@ -245,12 +245,15 @@ export default function TaskTemplates() {
       )}
 
       {confirmItem && (
-        <ConfirmDelete
+        <ConfirmDialog
           title="Delete template row"
-          message={`Delete "${confirmItem.title}" from ${selected.name}? Future stage changes will no longer create this task.`}
+          confirmLabel="Delete"
+          variant="danger"
           onConfirm={confirmDelete}
           onCancel={() => setConfirmItem(null)}
-        />
+        >
+          {`Delete "${confirmItem.title}" from ${selected.name}? Future stage changes will no longer create this task.`}
+        </ConfirmDialog>
       )}
     </div>
   );
