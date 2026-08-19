@@ -67,6 +67,7 @@ export default function CustomersPage({ user }) {
       title="Customers"
       subtitle="All communities and the active pipeline"
       action="+ New Customer"
+      wide
       topbarExtra={
         <div className="chips" aria-label="Customer view">
           {["board", "list"].map((option) => (

@@ -45,6 +45,12 @@ const SEED_USERS = [
     name: "Sofia Cruz",
     role: null,
   },
+  {
+    googleSub: "seed-alexandria-montgomery-smythe",
+    email: "alexandria@vrtsync.com",
+    name: "Alexandria Montgomery-Smythe, Senior Operations Coordinator",
+    role: "sales",
+  },
 ];
 
 function daysAgo(n, hour = 10, minute = 0) {
@@ -298,6 +304,7 @@ const TASK_PLANS = [
   ["Collect signed agreement from Meridian", "Willow Creek HOA", "sales", "jordan", -1, "open"],
   ["Send Miramonte reference sheet to Elaine", "Willow Creek HOA", "sales", "jordan", null, "done"],
   ["Draft renewal quote after re-walk", "Cedar Ridge HOA", "sales", "jordan", 12, "open"],
+  ["Coordinate the comprehensive onboarding handoff and stakeholder readiness review", "Willow Creek HOA", "sales", "alex", 8, "open"],
   // Maya, mapping
   ["Schedule property walk with Dana", "Willow Creek HOA", "mapping", "maya", 0, "open"],
   ["Map the two undocumented north zones", "Ridgeview Commons", "mapping", "maya", -5, "open"],
@@ -429,6 +436,21 @@ const TEMPLATE_PLANS = [
 // open template tasks.
 const FIXTURE_CUSTOMERS = (ownerIds) => [
   {
+    name: "The Evergreens at Northfield Meadows Community Association",
+    managementCompany: "Northstar Residential Community Management Partners",
+    isSelfManaged: false,
+    unitCount: 1847,
+    acreage: "214.70",
+    fullyMaintained: true,
+    stage: "live",
+    stageEnteredAt: daysAgo(2),
+    ownerUserId: ownerIds.randy,
+    termYears: 3,
+    renewalDate: "2027-08-15",
+    source: "Referral",
+    status: "active",
+  },
+  {
     name: "Birchwood Meadows HOA",
     managementCompany: "Meridian Management",
     isSelfManaged: false,
@@ -458,6 +480,12 @@ const FIXTURE_CUSTOMERS = (ownerIds) => [
 ];
 
 const FIXTURE_LAYERS = {
+  "The Evergreens at Northfield Meadows Community Association": [
+    ["property", true, "218000.00"],
+    ["irrigation", true, "74000.00"],
+    ["trees", true, "41000.00"],
+    ["snow", true, "59000.00"],
+  ],
   "Birchwood Meadows HOA": [
     ["property", true, "21800.00"],
     ["irrigation", true, "7400.00"],
@@ -586,6 +614,7 @@ async function seed() {
     jordan: ownerIds.jordan,
     maya: ownerIds.maya,
     tomas: ownerIds.tomas,
+    alex: byName["Alexandria Montgomery-Smythe, Senior Operations Coordinator"],
   };
 
   const projectRows = PROJECT_PLANS.map(

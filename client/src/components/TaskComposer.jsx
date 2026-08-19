@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../lib/api.js";
+import Select from "./Select.jsx";
 
 // Inline manual task form, no modal, no overlay. Used by Team To-Do and
 // the customer To-Do tab. Always submits source=manual; no source field
@@ -88,8 +89,7 @@ export default function TaskComposer({
       </div>
       <div className="c-actions">
         {needsContext && (
-          <select
-            className="tc-select"
+          <Select
             aria-label="Task context"
             value={context}
             onChange={(e) => setContext(e.target.value)}
@@ -109,10 +109,9 @@ export default function TaskComposer({
                 </option>
               ))}
             </optgroup>
-          </select>
+          </Select>
         )}
-        <select
-          className="tc-select"
+        <Select
           aria-label="Role"
           value={role}
           onChange={(e) => setRole(e.target.value)}
@@ -122,9 +121,8 @@ export default function TaskComposer({
               {r.label}
             </option>
           ))}
-        </select>
-        <select
-          className="tc-select"
+        </Select>
+        <Select
           aria-label="Assignee"
           value={assignee}
           onChange={(e) => setAssignee(e.target.value)}
@@ -135,9 +133,9 @@ export default function TaskComposer({
               {u.name}
             </option>
           ))}
-        </select>
+        </Select>
         <input
-          className="tc-select"
+          className="tc-date"
           type="date"
           aria-label="Due date"
           value={dueDate}

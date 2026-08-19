@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="g-4">
+      <div className="g-4 dashboard-kpis">
         <KpiTile
           label="Active Pipeline"
           value={kpis.activePipeline}
@@ -102,7 +102,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="g-2-1">
+      <div className="g-2-1 dashboard-body canvas-capped">
         <div className="stack">
           <section className={`card${todoAlarm ? " k-alarm" : ""}`}>
             <div className="card-head">

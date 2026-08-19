@@ -55,6 +55,7 @@ export default function ProjectsPage({ user }) {
       subtitle="Customer-linked and internal work"
       action="+ New Project"
       onAction={() => setCreating((current) => !current)}
+      wide
     >
       <div className="callout">
         <span className="ci">&#9432;</span>

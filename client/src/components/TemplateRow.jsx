@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Select from "./Select.jsx";
 
 const ROLE_LABELS = { sales: "Sales", mapping: "Mapping", admin: "Admin" };
 
@@ -40,8 +41,8 @@ export default function TemplateRow({
           aria-label="Task title"
           autoFocus
         />
-        <select
-          className="rl tmpl-input"
+        <Select
+          wrapperClassName="rl"
           value={role}
           onChange={(e) => setRole(e.target.value)}
           aria-label="Role"
@@ -51,7 +52,7 @@ export default function TemplateRow({
               {label}
             </option>
           ))}
-        </select>
+        </Select>
         <input
           className="due tmpl-input"
           type="number"

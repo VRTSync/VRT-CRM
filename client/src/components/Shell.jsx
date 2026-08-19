@@ -8,6 +8,8 @@ export default function Shell({
   action,
   topbarExtra,
   onAction,
+  contentClassName = "",
+  wide = false,
   children,
 }) {
   return (
@@ -21,7 +23,7 @@ export default function Shell({
           extra={topbarExtra}
           onAction={onAction}
         />
-        <div className="content stack">{children}</div>
+        <div className={`content stack${wide ? " content-wide" : ""}${contentClassName ? ` ${contentClassName}` : ""}`}>{children}</div>
       </main>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_ORDER,
 } from "../lib/format.js";
+import Select from "../components/Select.jsx";
 
 export default function ProjectRecord({ user }) {
   const { id } = useParams();
@@ -120,7 +121,7 @@ export default function ProjectRecord({ user }) {
           <div className="ch-trail">
             <label className="stage-select">
               <span className="ss-label">Project status</span>
-              <select
+              <Select
                 value={project.status}
                 onChange={(event) => changeStatus(event.target.value)}
               >
@@ -129,7 +130,7 @@ export default function ProjectRecord({ user }) {
                     {PROJECT_STATUS_LABELS[status]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
         </div>

@@ -57,6 +57,7 @@ function TeamTodoScreen({ user }) {
       subtitle="Open tasks across the company"
       action="+ Add Task"
       onAction={() => setComposerOpen((v) => !v)}
+      wide
       topbarExtra={
         <div className="chips">
           {GROUPINGS.map((g) => (
@@ -157,6 +158,7 @@ export default function App() {
             title="Dashboard"
             subtitle="Today across the company"
             action="+ New Customer"
+            wide
           >
             <DashboardPage />
           </Shell>

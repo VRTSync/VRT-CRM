@@ -4,6 +4,7 @@ import {
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_ORDER,
 } from "../lib/format.js";
+import Select from "./Select.jsx";
 
 export default function ProjectComposer({
   currentUser,
@@ -44,7 +45,7 @@ export default function ProjectComposer({
   }
 
   return (
-    <form className="card k-accent project-form" onSubmit={submit}>
+    <form className="card k-accent project-form canvas-capped" onSubmit={submit}>
       <div className="card-head">
         <h2>New Project</h2>
       </div>
@@ -69,7 +70,7 @@ export default function ProjectComposer({
           </label>
           <label className="project-field">
             <span>Customer</span>
-            <select
+            <Select
               value={customerId}
               onChange={(event) => setCustomerId(event.target.value)}
             >
@@ -79,11 +80,11 @@ export default function ProjectComposer({
                   {customer.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="project-field">
             <span>Project lead</span>
-            <select
+            <Select
               value={leadUserId}
               onChange={(event) => setLeadUserId(event.target.value)}
             >
@@ -92,7 +93,7 @@ export default function ProjectComposer({
                   {user.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="project-field">
             <span>Target date</span>
@@ -104,7 +105,7 @@ export default function ProjectComposer({
           </label>
           <label className="project-field">
             <span>Status</span>
-            <select
+            <Select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
             >
@@ -113,7 +114,7 @@ export default function ProjectComposer({
                   {PROJECT_STATUS_LABELS[option]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
         {error && <div className="deal-error" role="alert">{error}</div>}

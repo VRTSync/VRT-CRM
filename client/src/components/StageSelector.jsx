@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { STAGE_ORDER, STAGE_LABELS } from "../lib/format.js";
 import { api } from "../lib/api.js";
 import StageChangeDialog from "./StageChangeDialog.jsx";
+import Select from "./Select.jsx";
 
 // Keyboard-reachable stage selector per spec 12. The server decides whether
 // a move needs a reason (backward, skip ahead, or open checklist items);
@@ -34,7 +35,7 @@ export default function StageSelector({ customer, onChanged }) {
       <label className="ss-label" htmlFor="stage-selector">
         Stage
       </label>
-      <select
+      <Select
         id="stage-selector"
         value={pending}
         onChange={onSelect}
@@ -45,7 +46,7 @@ export default function StageSelector({ customer, onChanged }) {
             {STAGE_LABELS[key]}
           </option>
         ))}
-      </select>
+      </Select>
       {error && <div className="ss-error">{error}</div>}
       {targetStage && (
         <StageChangeDialog

@@ -3,6 +3,7 @@ import {
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_ORDER,
 } from "../lib/format.js";
+import Select from "./Select.jsx";
 
 export default function DealCard({
   customer,
@@ -61,8 +62,7 @@ export default function DealCard({
           {statusLabel}
         </span>
         {project && (
-          <select
-            className="project-status-select"
+          <Select
             aria-label={`Status for ${project.name}`}
             value={project.status}
             onChange={(event) => onStatusChange(project, event.target.value)}
@@ -72,7 +72,7 @@ export default function DealCard({
                 {PROJECT_STATUS_LABELS[status]}
               </option>
             ))}
-          </select>
+          </Select>
         )}
       </div>
       {error && <div className="deal-error" role="alert">{error}</div>}

@@ -4,6 +4,7 @@ import { STAGE_LABELS } from "../lib/format.js";
 import TemplateRow from "../components/TemplateRow.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import Avatar from "../components/Avatar.jsx";
+import Select from "../components/Select.jsx";
 
 const ROLE_LABELS = { sales: "Sales", mapping: "Mapping", admin: "Admin" };
 
@@ -171,8 +172,8 @@ export default function TaskTemplates() {
                   aria-label="New task title"
                   autoFocus
                 />
-                <select
-                  className="rl tmpl-input"
+                <Select
+                  wrapperClassName="rl"
                   value={newRow.role}
                   onChange={(e) => setNewRow({ ...newRow, role: e.target.value })}
                   aria-label="New task role"
@@ -182,7 +183,7 @@ export default function TaskTemplates() {
                       {label}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <input
                   className="due tmpl-input"
                   type="number"

@@ -1,5 +1,6 @@
 import { deriveStatus, STATUS_META } from "../lib/taskStatus.js";
 import { formatDate } from "../lib/format.js";
+import Select from "./Select.jsx";
 
 const ROLE_LABELS = { sales: "Sales", mapping: "Mapping", admin: "Admin" };
 
@@ -46,8 +47,7 @@ export default function TaskRow({ task, onToggle, onAssign, users }) {
       </div>
       <div className="trail">
         {onAssign && users && (
-          <select
-            className="assign-select"
+          <Select
             aria-label={`Assign ${task.title}`}
             value=""
             onChange={(e) => {
@@ -60,7 +60,7 @@ export default function TaskRow({ task, onToggle, onAssign, users }) {
                 {u.name}
               </option>
             ))}
-          </select>
+          </Select>
         )}
         <span className={`badge ${meta.variant}`.trim()}>{badgeLabel}</span>
       </div>
