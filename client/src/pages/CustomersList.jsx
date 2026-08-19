@@ -25,24 +25,27 @@ const STAGE_BADGES = {
   churned: "",
 };
 
-export default function CustomersList() {
+export default function CustomersList({ rows: providedRows, owners: providedOwners }) {
   const navigate = useNavigate();
   const [rows, setRows] = useState(null);
   const [owners, setOwners] = useState({});
   const [sort, setSort] = useState({ key: "name", dir: 1 });
 
   useEffect(() => {
+    if (providedRows) return;
     api.customers().then(setRows);
     api.users().then((users) => {
       setOwners(Object.fromEntries(users.map((u) => [u.id, u.name])));
     });
-  }, []);
+  }, [providedRows]);
 
   const sorted = useMemo(() => {
-    if (!rows) return null;
-    const withOwner = rows.map((r) => ({
+    const sourceRows = providedRows || rows;
+    const sourceOwners = providedOwners || owners;
+    if (!sourceRows) return null;
+    const withOwner = sourceRows.map((r) => ({
       ...r,
-      ownerName: owners[r.ownerUserId] || "",
+      ownerName: sourceOwners[r.ownerUserId] || "",
     }));
     const { key, dir } = sort;
     return withOwner.sort((a, b) => {
@@ -54,7 +57,7 @@ export default function CustomersList() {
       if (typeof av === "number") return (av - bv) * dir;
       return String(av).localeCompare(String(bv)) * dir;
     });
-  }, [rows, owners, sort]);
+  }, [providedRows, providedOwners, rows, owners, sort]);
 
   function toggleSort(key) {
     setSort((s) => (s.key === key ? { key, dir: -s.dir } : { key, dir: 1 }));

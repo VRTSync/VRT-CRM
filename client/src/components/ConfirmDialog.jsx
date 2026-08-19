@@ -5,6 +5,7 @@ export default function ConfirmDialog({
   title,
   confirmLabel = "Confirm",
   variant = "primary",
+  confirmDisabled = false,
   onConfirm,
   onCancel,
   children,
@@ -32,7 +33,12 @@ export default function ConfirmDialog({
             <button type="button" className="btn ghost" onClick={onCancel} autoFocus>
               Cancel
             </button>
-            <button type="button" className={confirmClass} onClick={onConfirm}>
+            <button
+              type="button"
+              className={confirmClass}
+              onClick={onConfirm}
+              disabled={confirmDisabled}
+            >
               {confirmLabel}
             </button>
           </div>

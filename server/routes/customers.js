@@ -4,7 +4,11 @@ import { db } from "../db/index.js";
 import { customers, customerLayers, notes } from "../db/schema.js";
 import { requireAuth } from "../auth.js";
 import { STAGE_ORDER } from "../lib/stageOrder.js";
-import { changeStage, ReasonRequiredError } from "../lib/stageEngine.js";
+import {
+  changeStage,
+  previewStageChange,
+  ReasonRequiredError,
+} from "../lib/stageEngine.js";
 
 const router = Router();
 
@@ -124,6 +128,36 @@ router.post("/:id/stage", requireAuth, async (req, res, next) => {
         reasonRequired: true,
       });
     }
+    next(err);
+  }
+});
+
+// Stage preview. It validates the same input as the write route but only runs
+// the shared read-only stage-engine calculation.
+router.post("/:id/stage-preview", requireAuth, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: "Invalid customer id" });
+    }
+    const { stage } = req.body || {};
+    if (!STAGE_ORDER.includes(stage)) {
+      return res.status(400).json({ error: "Invalid stage" });
+    }
+    const preview = await previewStageChange({ customerId: id, toStage: stage });
+    if (!preview) {
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.id, id));
+      return res.status(customer ? 400 : 404).json({
+        error: customer
+          ? "Customer is already in that stage"
+          : "Customer not found",
+      });
+    }
+    res.json(preview);
+  } catch (err) {
     next(err);
   }
 });

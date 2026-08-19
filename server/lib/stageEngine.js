@@ -41,36 +41,204 @@ export class ReasonRequiredError extends Error {
   }
 }
 
-// Whether open checklist items exist for the customer's current stage:
-// open or blocked template tasks whose items belong to the template that
-// triggers on that stage.
-async function hasOpenChecklist(tx, customerId, stage) {
+// Read-only checklist lookup. This intentionally uses all template items,
+// including inactive ones, because an existing task can still reference an
+// item that was later deactivated.
+export async function getChecklistTasks(tx, customerId, stage, statuses) {
   const [template] = await tx
     .select()
     .from(taskTemplates)
     .where(
       and(eq(taskTemplates.triggerStage, stage), eq(taskTemplates.isActive, true))
     );
-  if (!template) return false;
+  if (!template) return { template: null, itemIds: [], tasks: [] };
   const items = await tx
     .select({ id: templateItems.id })
     .from(templateItems)
     .where(eq(templateItems.templateId, template.id));
-  if (!items.length) return false;
-  const open = await tx
+  const itemIds = items.map((item) => item.id);
+  if (!itemIds.length) return { template, itemIds, tasks: [] };
+  const matchingTasks = await tx
     .select({ id: tasks.id })
     .from(tasks)
     .where(
       and(
         eq(tasks.customerId, customerId),
-        inArray(
-          tasks.templateItemId,
-          items.map((i) => i.id)
-        ),
-        inArray(tasks.status, ["open", "blocked"])
+        inArray(tasks.templateItemId, itemIds),
+        inArray(tasks.status, statuses)
       )
     );
-  return open.length > 0;
+  return { template, itemIds, tasks: matchingTasks };
+}
+
+export async function getForwardTaskPlan(tx, customer, toStage) {
+  const [template] = await tx
+    .select()
+    .from(taskTemplates)
+    .where(
+      and(
+        eq(taskTemplates.triggerStage, toStage),
+        eq(taskTemplates.isActive, true)
+      )
+    );
+  if (!template) return { tasks: [], assignees: [] };
+
+  const items = await tx
+    .select()
+    .from(templateItems)
+    .where(
+      and(
+        eq(templateItems.templateId, template.id),
+        eq(templateItems.isActive, true)
+      )
+    )
+    .orderBy(templateItems.sequence);
+  if (!items.length) return { tasks: [], assignees: [] };
+
+  // Dedupe is by customer and template item across every task status.
+  const existing = await tx
+    .select({ templateItemId: tasks.templateItemId })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.customerId, customer.id),
+        inArray(
+          tasks.templateItemId,
+          items.map((item) => item.id)
+        )
+      )
+    );
+  const existingItemIds = new Set(existing.map((task) => task.templateItemId));
+  const activeUsers = await tx
+    .select()
+    .from(users)
+    .where(eq(users.isActive, true));
+  const owner = activeUsers.find((user) => user.id === customer.ownerUserId);
+  const resolveAssignee = (role) => {
+    if (owner && owner.role === role) return owner.id;
+    const holders = activeUsers.filter((user) => user.role === role);
+    return holders.length === 1 ? holders[0].id : null;
+  };
+
+  const newTasks = items
+    .filter((item) => !existingItemIds.has(item.id))
+    .map((item) => ({
+      title: item.title,
+      customerId: customer.id,
+      role: item.role,
+      assigneeUserId: resolveAssignee(item.role),
+      dueDate: todayPlus(item.dueOffsetDays),
+      status: "open",
+      source: "template",
+      templateItemId: item.id,
+    }));
+  const namesById = new Map(activeUsers.map((user) => [user.id, user.name]));
+  const groupCounts = new Map();
+  newTasks.forEach((task) => {
+    const key = task.assigneeUserId || "unassigned";
+    groupCounts.set(key, (groupCounts.get(key) || 0) + 1);
+  });
+  const assignees = [...groupCounts.entries()].map(([id, count]) => ({
+    userId: id === "unassigned" ? null : id,
+    name: id === "unassigned" ? "Unassigned" : namesById.get(id),
+    count,
+  }));
+  return { tasks: newTasks, assignees };
+}
+
+export async function getBackwardTaskSummary(tx, customerId, fromStage) {
+  const [template] = await tx
+    .select()
+    .from(taskTemplates)
+    .where(eq(taskTemplates.triggerStage, fromStage));
+  if (!template) return { itemIds: [], openDeleteCount: 0, completedKeepCount: 0 };
+  const items = await tx
+    .select({ id: templateItems.id })
+    .from(templateItems)
+    .where(eq(templateItems.templateId, template.id));
+  const itemIds = items.map((item) => item.id);
+  if (!itemIds.length) return { itemIds, openDeleteCount: 0, completedKeepCount: 0 };
+  const matchingTasks = await tx
+    .select({ status: tasks.status })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.customerId, customerId),
+        eq(tasks.source, "template"),
+        inArray(tasks.templateItemId, itemIds)
+      )
+    );
+  return {
+    itemIds,
+    openDeleteCount: matchingTasks.filter((task) =>
+      ["open", "blocked"].includes(task.status)
+    ).length,
+    completedKeepCount: matchingTasks.filter((task) => task.status === "done").length,
+  };
+}
+
+// A shared, read-only calculation used by the preview endpoint and by the
+// write transaction. Keeping it here prevents the two paths from drifting in
+// template, dedupe, active-user, and assignee fallback behavior.
+export async function buildStageChangePreview(tx, customer, toStage) {
+  const direction = classifyMove(customer.stage, toStage);
+  const skip = direction === "forward" && isSkip(customer.stage, toStage);
+  const carryForward =
+    direction === "forward"
+      ? await getChecklistTasks(tx, customer.id, customer.stage, ["open", "blocked"])
+      : { tasks: [] };
+  const forward =
+    direction === "forward"
+      ? await getForwardTaskPlan(tx, customer, toStage)
+      : { tasks: [], assignees: [] };
+  const backward =
+    direction === "backward"
+      ? await getBackwardTaskSummary(tx, customer.id, customer.stage)
+      : { openDeleteCount: 0, completedKeepCount: 0 };
+
+  return {
+    fromStage: customer.stage,
+    toStage,
+    direction,
+    skip,
+    reasonRequired:
+      direction === "backward" || skip || carryForward.tasks.length > 0,
+    carryForwardCount: carryForward.tasks.length,
+    forward: {
+      taskCount: forward.tasks.length,
+      assigneeCount: forward.assignees.length,
+      assignees: forward.assignees,
+      newTasks: forward.tasks,
+    },
+    backward,
+  };
+}
+
+// A non-mutating public entry point for the customer preview route.
+export async function previewStageChange({ customerId, toStage }) {
+  const [customer] = await db
+    .select()
+    .from(customers)
+    .where(eq(customers.id, customerId));
+  if (!customer || customer.stage === toStage) return null;
+  const preview = await buildStageChangePreview(db, customer, toStage);
+  return {
+    fromStage: preview.fromStage,
+    toStage: preview.toStage,
+    direction: preview.direction,
+    skip: preview.skip,
+    reasonRequired: preview.reasonRequired,
+    carryForwardCount: preview.carryForwardCount,
+    forward: {
+      taskCount: preview.forward.taskCount,
+      assigneeCount: preview.forward.assigneeCount,
+      assignees: preview.forward.assignees,
+    },
+    backward: {
+      openDeleteCount: preview.backward.openDeleteCount,
+      completedKeepCount: preview.backward.completedKeepCount,
+    },
+  };
 }
 
 // Runs a full stage change per spec 10.1 and 10.2, in one transaction.
@@ -90,18 +258,13 @@ export async function changeStage({ customerId, toStage, reason, authorUserId })
     if (!customer || customer.stage === toStage) return null;
 
     const fromStage = customer.stage;
-    const direction = classifyMove(fromStage, toStage);
-    const skip = direction === "forward" && isSkip(fromStage, toStage);
+    const preview = await buildStageChangePreview(tx, customer, toStage);
+    const { direction, skip } = preview;
 
     // A reason is required on any backward move, any skip ahead, and any
     // forward move that leaves open checklist items for the current stage.
     if (!reason) {
-      const required =
-        direction === "backward" ||
-        skip ||
-        (direction === "forward" &&
-          (await hasOpenChecklist(tx, customer.id, fromStage)));
-      if (required) throw new ReasonRequiredError();
+      if (preview.reasonRequired) throw new ReasonRequiredError();
     }
 
     // 10.1 step 1: one note with kind = system, both stage columns set.
@@ -134,98 +297,23 @@ export async function changeStage({ customerId, toStage, reason, authorUserId })
       // stay, manual tasks are never touched, and templates do not fire.
       // Cleanup applies whether or not the template is still active: the
       // tasks exist, so they are abandoned either way.
-      const [fromTemplate] = await tx
-        .select()
-        .from(taskTemplates)
-        .where(eq(taskTemplates.triggerStage, fromStage));
-      if (fromTemplate) {
-        const items = await tx
-          .select({ id: templateItems.id })
-          .from(templateItems)
-          .where(eq(templateItems.templateId, fromTemplate.id));
-        const itemIds = items.map((i) => i.id);
-        if (itemIds.length) {
-          await tx
-            .delete(tasks)
-            .where(
-              and(
-                eq(tasks.customerId, customer.id),
-                eq(tasks.source, "template"),
-                inArray(tasks.templateItemId, itemIds),
-                inArray(tasks.status, ["open", "blocked"])
-              )
-            );
-        }
+      if (preview.backward.itemIds.length) {
+        await tx
+          .delete(tasks)
+          .where(
+            and(
+              eq(tasks.customerId, customer.id),
+              eq(tasks.source, "template"),
+              inArray(tasks.templateItemId, preview.backward.itemIds),
+              inArray(tasks.status, ["open", "blocked"])
+            )
+          );
       }
       return updated;
     }
 
-    // 10.1 step 4: look up an active template for the new stage.
-    const [template] = await tx
-      .select()
-      .from(taskTemplates)
-      .where(
-        and(
-          eq(taskTemplates.triggerStage, toStage),
-          eq(taskTemplates.isActive, true)
-        )
-      );
-    if (!template) return updated;
-
-    const items = await tx
-      .select()
-      .from(templateItems)
-      .where(
-        and(
-          eq(templateItems.templateId, template.id),
-          eq(templateItems.isActive, true)
-        )
-      )
-      .orderBy(templateItems.sequence);
-
-    // 10.1 step 5: the dedupe is on template_item_id scoped to this
-    // customer, across every status. Not on title, not on open tasks only.
-    const existing = await tx
-      .select({ templateItemId: tasks.templateItemId })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.customerId, customer.id),
-          inArray(
-            tasks.templateItemId,
-            items.map((i) => i.id)
-          )
-        )
-      );
-    const existingItemIds = new Set(existing.map((t) => t.templateItemId));
-
-    // 10.1 step 6: assignee resolution, three-step fallback.
-    const activeUsers = await tx
-      .select()
-      .from(users)
-      .where(eq(users.isActive, true));
-    const owner = activeUsers.find((u) => u.id === updated.ownerUserId);
-    function resolveAssignee(role) {
-      if (owner && owner.role === role) return owner.id;
-      const holders = activeUsers.filter((u) => u.role === role);
-      if (holders.length === 1) return holders[0].id;
-      return null;
-    }
-
-    const newTasks = items
-      .filter((item) => !existingItemIds.has(item.id))
-      .map((item) => ({
-        title: item.title,
-        customerId: customer.id,
-        role: item.role,
-        assigneeUserId: resolveAssignee(item.role),
-        dueDate: todayPlus(item.dueOffsetDays),
-        status: "open",
-        source: "template",
-        templateItemId: item.id,
-      }));
-    if (newTasks.length) {
-      await tx.insert(tasks).values(newTasks);
+    if (preview.forward.newTasks.length) {
+      await tx.insert(tasks).values(preview.forward.newTasks);
     }
     return updated;
   });

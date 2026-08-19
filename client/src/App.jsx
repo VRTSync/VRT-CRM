@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Shell from "./components/Shell.jsx";
-import CustomersList from "./pages/CustomersList.jsx";
+import CustomersPage from "./pages/CustomersPage.jsx";
 import CustomerRecord from "./pages/CustomerRecord.jsx";
 import TeamTodo from "./pages/TeamTodo.jsx";
 import TaskTemplates from "./pages/TaskTemplates.jsx";
@@ -150,7 +150,8 @@ export default function App() {
   return (
     <OpenCustomerContext.Provider value={openCustomerValue}>
     <Routes>
-      {SCREENS.map((screen) => (
+      <Route path="/customers" element={<CustomersPage user={state.user} />} />
+      {SCREENS.filter((screen) => screen.path !== "/customers").map((screen) => (
         <Route
           key={screen.path}
           path={screen.path === "/" ? "/" : screen.path}
@@ -161,7 +162,6 @@ export default function App() {
               subtitle={screen.subtitle}
               action={screen.action}
             >
-              {screen.path === "/customers" && <CustomersList />}
               {screen.path === "/templates" && <TaskTemplates />}
             </Shell>
           }

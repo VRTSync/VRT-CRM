@@ -222,6 +222,8 @@
   line-height:1.15;font-variant-numeric:tabular-nums}
 .a-stat span{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--chrome-fg-3);font-weight:var(--fw-semi)}
 .a-stat.accent b{color:var(--accent-ink)} .a-stat.warn b{color:var(--warn)} .a-stat.alarm b{color:#fca5a5 /* intentional one off: readable alarm tint on navy */}
+.anchor-summary{display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--chrome-fg-2);margin-bottom:var(--sp-2)}
+.anchor-summary b{color:var(--chrome-fg-hi)}
 
 /* ---------- callout ---------- */
 .callout{
@@ -335,6 +337,15 @@ tr.row-link{cursor:pointer}
 .deal .d-meta{font-size:var(--fs-xs);color:var(--muted);margin-top:3px}
 .deal .d-foot{display:flex;align-items:center;gap:var(--sp-3);margin-top:var(--sp-4)}
 .deal .d-foot .badge{margin-left:auto}
+.deal[draggable="true"]{cursor:grab}
+.deal-open{display:block;width:100%;text-align:left}
+.deal-open span{display:block}
+.deal-stage-control{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);
+  font-size:var(--fs-2xs);color:var(--muted)}
+.deal-stage-control select{min-width:0;flex:1;font:inherit;color:var(--ink-2);background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius-sm);padding:2px var(--sp-2)}
+.deal-error{font-size:var(--fs-xs);color:var(--alarm-ink);background:var(--alarm-soft);
+  border-radius:var(--radius-sm);padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-3)}
 .prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:var(--sp-4)}
 .prog i{display:block;height:100%;background:var(--accent-2);border-radius:3px}
 .prog-label{font-size:10px;color:var(--muted);margin-top:3px}
@@ -487,6 +498,12 @@ tr.row-link{cursor:pointer}
   font:inherit;font-size:var(--fs-xs);color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:var(--radius-sm);padding:4px var(--sp-4);min-width:220px}
 .ss-error{font-size:var(--fs-xs);color:var(--alarm-ink);max-width:280px;text-align:right}
+.stage-reason-label{display:flex;flex-direction:column;gap:var(--sp-2);font-size:var(--fs-xs);
+  font-weight:var(--fw-semi);color:var(--ink-2)}
+.stage-reason-label textarea{min-height:84px;resize:vertical;font:inherit;font-weight:var(--fw-normal);
+  color:var(--ink-2);background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:var(--sp-4)}
+.stage-change-copy .ss-error{max-width:none;text-align:left}
 
 /* ---------- templates screen ---------- */
 .li-btn{width:100%;text-align:left;background:none;border:none;font:inherit;display:flex}

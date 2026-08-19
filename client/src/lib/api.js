@@ -45,6 +45,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ stage, reason }),
     }),
+  previewStageChange: (customerId, stage) =>
+    request(`/api/customers/${customerId}/stage-preview`, {
+      method: "POST",
+      body: JSON.stringify({ stage }),
+    }),
   getTemplates: () => request("/api/templates"),
   getTemplate: (id) => request(`/api/templates/${id}`),
   addTemplateItem: (templateId, data) =>
