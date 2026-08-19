@@ -1,14 +1,14 @@
 export default function TokenSwatch({ token, label = token }) {
   return (
-    <div className="token-swatch">
+    <div className="sw">
       <div
-        className="token-swatch-color"
-        style={{ backgroundColor: `var(${token})` }}
+        className="chipcolor"
+        style={{ background: `var(${token})` }}
         aria-hidden="true"
       />
-      <div className="token-swatch-label">
-        <strong>{label}</strong>
-        <code>{token}</code>
+      <div className="swl">
+        <div className="swn">{label}</div>
+        <div className="swv">{token}</div>
       </div>
     </div>
   );

@@ -223,7 +223,7 @@ function TokenGroup({ title, tokens, className = "" }) {
   return (
     <section className={`spec-token-group ${className}`}>
       <h3>{title}</h3>
-      <div className="token-grid">
+      <div className="swatches">
         {tokens.map((token) => (
           <TokenSwatch key={token} token={token} />
         ))}
@@ -277,7 +277,7 @@ export default function SpecScreen() {
           <TokenGroup title="Accent and status" tokens={accentTokens} />
           <section className="spec-token-group">
             <h3>Pipeline stages</h3>
-            <div className="token-grid">
+            <div className="swatches">
               {stageTokens.map(([label, token]) => (
                 <TokenSwatch key={token} label={label} token={token} />
               ))}
