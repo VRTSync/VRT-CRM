@@ -7,6 +7,6 @@ Task agents run in isolated environments with their own Postgres. When their wor
 
 **Why:** Lost significant debugging time chasing proxy/preview config when the real cause was an empty main-env database after Slices 1–3 merged.
 
-**How to apply:** After any slice merge that touches `server/db/schema.js`, apply schema and re-seed in the main env. `drizzle-kit push` fails here (interactive TTY prompt over the `session` table conflict) — instead run `npx drizzle-kit generate` in `server/` and apply the SQL with `psql "$DATABASE_URL" -f db/migrations/<file>.sql`, then `node db/seed.js`. Consider adding this to `scripts/post-merge.sh`.
+**How to apply:** After any slice merge that touches `server/db/schema.js`, apply the generated SQL migrations in the main environment. `drizzle-kit push` fails here (interactive TTY prompt over the `session` table conflict), so use `psql "$DATABASE_URL" -f db/migrations/<file>.sql`. Only run `node db/seed.js` when intentionally resetting demo data: it truncates the app tables. Consider adding safe migration application to `scripts/post-merge.sh`.
 
 Preview routing is covered in [preview-artifact-shim.md](preview-artifact-shim.md) — the app must be served through the registered artifact, not raw workflows or `[[ports]]` entries.
