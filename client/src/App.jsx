@@ -8,6 +8,7 @@ import TaskTemplates from "./pages/TaskTemplates.jsx";
 import ProjectsPage from "./pages/ProjectsPage.jsx";
 import ProjectRecord from "./pages/ProjectRecord.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import SpecScreen from "./pages/SpecScreen.jsx";
 import { OpenCustomerContext } from "./lib/openCustomer.js";
 import { api } from "./lib/api.js";
 
@@ -180,6 +181,7 @@ export default function App() {
               action={screen.action}
             >
               {screen.path === "/templates" && <TaskTemplates />}
+              {screen.path === "/spec" && <SpecScreen />}
             </Shell>
           }
         />
