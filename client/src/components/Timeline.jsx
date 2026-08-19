@@ -11,7 +11,7 @@ const KIND_META = {
   system: { className: "k-system", label: "Stage change", badge: "" },
 };
 
-export default function Timeline({ notes }) {
+export default function Timeline({ notes, clampBody = false }) {
   if (!notes.length) {
     return <div className="card-body hint">No entries yet.</div>;
   }
@@ -30,7 +30,8 @@ export default function Timeline({ notes }) {
               </span>
               <span className="tl-when">{formatDateTime(note.occurredAt)}</span>
             </div>
-            <div className="tl-body">{note.body}</div>
+            {note.customerName && <div className="tl-cust">{note.customerName}</div>}
+            <div className={`tl-body${clampBody ? " clamp" : ""}`}>{note.body}</div>
           </div>
         );
       })}

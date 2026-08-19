@@ -7,6 +7,7 @@ import TeamTodo from "./pages/TeamTodo.jsx";
 import TaskTemplates from "./pages/TaskTemplates.jsx";
 import ProjectsPage from "./pages/ProjectsPage.jsx";
 import ProjectRecord from "./pages/ProjectRecord.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
 import { OpenCustomerContext } from "./lib/openCustomer.js";
 import { api } from "./lib/api.js";
 
@@ -147,12 +148,27 @@ export default function App() {
     <OpenCustomerContext.Provider value={openCustomerValue}>
     <Routes>
       <Route path="/customers" element={<CustomersPage user={state.user} />} />
+      <Route
+        path="/"
+        element={
+          <Shell
+            user={state.user}
+            title="Dashboard"
+            subtitle="Today across the company"
+            action="+ New Customer"
+          >
+            <DashboardPage />
+          </Shell>
+        }
+      />
       <Route path="/projects" element={<ProjectsPage user={state.user} />} />
       <Route
         path="/projects/:id"
         element={<ProjectRecord user={state.user} />}
       />
-      {SCREENS.filter((screen) => screen.path !== "/customers").map((screen) => (
+      {SCREENS.filter(
+        (screen) => screen.path !== "/customers" && screen.path !== "/"
+      ).map((screen) => (
         <Route
           key={screen.path}
           path={screen.path === "/" ? "/" : screen.path}

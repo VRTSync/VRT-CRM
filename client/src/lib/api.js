@@ -15,6 +15,7 @@ async function request(path, options = {}) {
 
 export const api = {
   me: () => request("/api/me"),
+  dashboard: () => request("/api/dashboard"),
   logout: () => request("/auth/logout", { method: "POST" }),
   users: () => request("/api/users"),
   setUserRole: (id, role) =>
